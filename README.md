@@ -1,6 +1,3 @@
-# Modelos y Datos
-## Juan Manuel Morales
+# curso Modelos y Datos
 
-Un curso introductorio al uso de métodos de Máxima verosimilitud y Bayes para conectar conectar modelos con datos.
-
-Agosto del 2015
+Un curso introductorio a métodos de máxima verosimilitud y Bayes usando R y WinBUGS/Jags
