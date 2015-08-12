@@ -2,8 +2,9 @@
 title: "intro R"
 author: "jmm"
 date: "Monday, August 03, 2015"
-output: 
-  html_document: 
+output:
+  pdf_document: default
+  html_document:
     css: github.css
 ---
 
@@ -97,55 +98,51 @@ o con `which`:
 ```{r}
 idx <- which(yr > 2010)
 n[idx]
+```
 
-# si queremos calcular el "factor reproductivo" o la 
-# "tasa finita de incremento la poblaci?n
-# tenenos que calcular n(t+1) / n(t)
-# por ejemplo, para el 2010 la tasa de crecimiento fue
-n[2]/n[1]
+Algo interesante para ver en un set de datos como este es el "factor reproductivo" o "tasa finita de incremento la población", que no es otra cosa que $n(t+1) / n(t)$. Por ejemplo, para el 2010 la tasa de crecimiento fue de: `n[2]/n[1]` $=$ `r n[2]/n[1]`.
 
-# para no repetir las cuentas a?o por a?o podemos hacer un loop
-# pero antes necesitamos generar un vector para guardar los resultados
+Para no repetir las cuentas año por año podemos hacer un *for loop* pero antes necesitamos generar un vector para guardar los resultados:
 
+```{r}
 tasa <- numeric(length(n) - 1)
-# aqu? combinamos dos funciones: 'numeric' y 'length'
-# para ver qu? hace 'numeric' podemos hacer
-?numeric
+```
+Aquí combinamos dos funciones de `R`: `numeric` y `length`. Para ver qué hace 'numeric' podemos hacer `?numeric`.
+Poniendo un signo de pregunta y luego el nombre de una función de `R` accedemos a la documentación de esa función (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso información acerca de funciones que no conocemos es visitando a http://rseek.org/
 
-# poniendo un signo de pregunta y luego el nombre de una funci?n 
-# accedemos a la documentaci?n de esa funci?n
-# una mejor forma de encontrar ayuda e inlcuso informaci?n acerca de 
-# funciones que no conocemos es visitando a http://rseek.org/
 
-# volviendo a nuestro loop:
+Volviendo a nuestro *loop*, lo que queremos es repetir una operación (o varias) e ir guardando los resultados:
+```{r}
 for(i in 2:length(n)){
   tasa[i-1] <- n[i]/n[i-1]
-} 
+}
+```
 
-# el comando 'for' aqu? itera en valores de 'i' la cuenta n(t+1)/n(t)
-# fijense que 'i' est? definido de 2 hasta el largo del vector 'n'
-2:length(n)
-# usamos el valor de 'i' para cada iteraci?n para ver qu? valores de 'n' usar
-# en la cuenta y para indicar en qu? posici?n del vector 'tasa' guardamos el resultado
+El comando `for` aquí itera en valores de `i` la cuenta $n(t+1)/n(t)$. 
+Fijense que `i` está definido desde $2$ hasta el largo del vector `n`.
+Usamos el valor de `i` para cada iteración para ver qué valores de `n` usar en la cuenta y para indicar en qué posición del vector `tasa` guardamos el resultado.
 
-# alternativamente podr?amos hacer
+En este caso podríamos obtener los mismos valores haciendo:
+```{r}
 for(i in 1:(length(n)-1)){
   tasa[i] <- n[i+1]/n[i]
 }
+```
+Es importante notar que `1:(length(n)-1)` no es lo mismo que `1:length(n)-1`. Compruébenlo... 
 
-# es importante ver que 
-1:(length(n)-1)
-# no es lo mismo que
-1:length(n)-1 
 
-# para ver qu? sali? de estas cuentas escribimos
+Para ver qué salió de estas cuentas escribimos
+```{r}
 tasa
-
-# para graficar la tasa de incremento en cada a?o hacemos
+```
+Para graficar la tasa de incremento en cada año podemos usar
+```{r}
 plot(yr[2:length(n)], tasa)
-
-# podemos "embellecer" un poco el gr?fico usando 'main', 'xlab', y 'pch')
+```
+Podemos "embellecer" un poco el gráfico usando `main`, `xlab`, y `pch`
+```{r}
 plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="a?o", pch=16)
+```
 
 # ahora que aprendimos a usar un 'for' loop,
 # podemos ver que en este caso no lo necesit?bamos! 
