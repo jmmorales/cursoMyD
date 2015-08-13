@@ -135,26 +135,26 @@ Para ver qué salió de estas cuentas escribimos
 ```{r}
 tasa
 ```
+
 Para graficar la tasa de incremento en cada año podemos usar
 ```{r}
 plot(yr[2:length(n)], tasa)
 ```
+
 Podemos "embellecer" un poco el gráfico usando `main`, `xlab`, y `pch`
 ```{r}
-plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="a?o", pch=16)
+plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="año", pch=16)
 ```
 
-# ahora que aprendimos a usar un 'for' loop,
-# podemos ver que en este caso no lo necesit?bamos! 
+Ahora que aprendimos a usar un *for loop*, podemos ver que en este caso no lo necesitábamos! De hecho, una muy buena característica de `R` es que permite hacer operaciones sobre vectores, listas, etc. como veremos oportunamente. De todas formas, es importante aprender a manejar los *loops*. 
 
+```{r}
 tasa <- n[2:6]/n[1:5]
-# esto es posible porque muchas operaciones en R est?n "vectorizadas",
-# de manera que es m?s f?cil escribir y m?s r?pido ejecutar algunas cosas
+```
 
-# En cualquier caso, vemos que la tasa de incremento poblacional 
-# es constante e igual a 3.
-# Podemos usar ese valor para proyectar el tam?o poblacional en el futuro:
+En cualquier caso, vemos que la tasa de incremento poblacional es constante e igual a `r n[2]/n[1]`. Podemos usar ese valor para proyectar el tamño poblacional en el futuro:
 
+```{r}
 lambda <- 3
 yr <- c(yr, 2015:2020)
 n <- c(n, numeric(6))
@@ -164,21 +164,16 @@ for(i in 7:length(n)){
 }
 
 plot(yr,n)
+```
 
-# lo mismo podr?amos hacer definiendo condiciones iniciales
-# y usando la f?rmula n(t) = n(0)*lambda^t
+Lo mismo podríamos hacer definiendo condiciones iniciales y usando la fórmula $n(t) = n(0) \lambda^{t}$.
 
+```{r}
 n0 <- 2
 tiempo <- 0:11
 nt <- n0 * lambda^tiempo
 
-plot(tiempo,nt)
-
-# comprobemos que efectivamente da lo mismo
-plot(n,nt)
-
-# o bien
-n-nt
+plot(tiempo, nt)
 
 # o podemos graficar las dos trayectorias poblacionales
 plot(yr,n)
@@ -202,6 +197,8 @@ lines(tiempo+yr[1], nt, type="s")
 
 #------------------------------------------------------------------------------
 
+
+```{r}
 d=0.4
 b=0.1
 m=3 
@@ -211,12 +208,11 @@ for(t in 1:19){
   n[t+1] <- n[t]*(1-d)*(1+b)+m
 }
 plot(n)
+```
 
-# Es poco creible que la poblaci?n siga y siga creciendo como
-# n(t) = n(0)*lambda^t
-# Una opci?n es pensar que la tasa de incremento poblacional decrece 
-# con el tama?o poblacional (modelo log?stico)
+Es poco creible que la poblaci?n siga y siga creciendo como $n(t) = n(0) \lambda^{t}$. Una opción es pensar que la tasa de incremento poblacional decrece con el tamaño poblacional (modelo logístico).
 
+```{r}
 lambda <- 1.8
 N <- 0:100
 K <- 80  # capacidad de carga
@@ -234,15 +230,15 @@ for(t in 1:(length(n)-1)){
 }
 
 plot(1:length(n), n, type="l", lwd=2, xlab="tiempo")
+```
 
-#-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+
 #  Escribiendo Funciones 
 
-# Un aspecto clave de la programaci?n es escribir funciones.
-# Una funci?n es un conjunto de instrucciones que toma "inputs" o "argumentos",
-# usa esos inputs para calcular otros valores que devuelve como resultado.
-# Por ejemplo, podemos escribir una funci?n para el modelo log?stico:
-
+Un aspecto clave de la programaci?n es escribir funciones. Una función es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una función para el modelo logístico:
+```{r}
 logistic <- function(n0,rd,K,nyr=10){
   n <- numeric(nyr)
   n[1] <- n0
@@ -251,48 +247,48 @@ logistic <- function(n0,rd,K,nyr=10){
 	}
 	return(n)
 }
-		
-# esta funci?n tiene como argumentos a n0, rd, K y el n?mero de a?os 
-# (nyr) que queremos simular.
-#
-# A menos que le digamos otra cosa, R respeta el orden en que definimos los 
-# inputs de la funci?n. Entonces, si queremos simular la trayectoria de una 
-# poblaci?n que sigue un modelo log?stico con n0=1, rd=1.5, y K=100 
-# por 10 generaciones, podemos hacer:
-n <- logistic(1,1.5,100)
+```		
+Esta función tiene como argumentos a n0, rd, K y el número de años (nyr) que queremos simular.
 
-# y graficar
+A menos que le digamos otra cosa, R respeta el orden en que definimos los inputs de la funci?n. Entonces, si queremos simular la trayectoria de una población que sigue un modelo logístico con n0=1, rd=1.5, y K=100 por 10 generaciones, podemos hacer:
+```{r}
+n <- logistic(1,1.5,100) 
+#y graficar
 plot(n)
+```
 
-# en este caso, no le dijimos a la funci?n que quer?amos nyr=10 porque
-# est? definido por defecto. 
 
-# En realidad no es muy buena idea pasarle valores de esta manera a las funciones
-# Nos conviene ser m?s expl?citos:
 
+En este caso, no le dijimos a la función que queríamos nyr=10 porque está definido por defecto. 
+
+En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser más explícitos:
+```{r}
 n <- logistic(n0=1, rd=1.5, K=100, nyr=20)
-
-# incluso podemos cambiar el orden de los argumentos si es que 
-# los llamamos por su nombre:
+```
+Incluso podemos cambiar el orden de los argumentos si es que los llamamos por su nombre:
+```{r}
 n <- logistic(nyr=20, rd=1.5, n0=2, K=100)
-
-# Otras veces conviene definir los valores de los inputs aparte
-# por ejemplo:
-
+```
+Otras veces conviene definir los valores de los inputs aparte. Por ejemplo:
+```{r}
 n0 <- 2
 rd <- 1.5
 K <- 100
 nyears <- 20  # no necesariamente usamos el mismo nombre
 
 n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
+```
+-----------------------------------------------------------------------------
+# Ejercicios:
+ (5) ?qu? pasa si cambiamos n(0)?
+ (6) ?y si cambiamos rd?
+ 
+ Ricker (1954), cambi? la relaci?n lineal entre lambda y n por exp(-a*n)
+ (7) simular trayectorias poblacionales con el modelo de Ricker y compararlo 
+     con el log?stico
+  
 
-#-----------------------------------------------------------------------------
-# ejercicios:
-# (5) ?qu? pasa si cambiamos n(0)?
-# (6) ?y si cambiamos rd?
-# 
-# Ricker (1954), cambi? la relaci?n lineal entre lambda y n por exp(-a*n)
-# (7) simular trayectorias poblacionales con el modelo de Ricker y compararlo 
-#     con el log?stico
-#------------------------------------------------------------------------------
-#------------------------------------------------------------------------------    
+
+
+
+
