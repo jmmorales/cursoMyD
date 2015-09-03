@@ -210,11 +210,7 @@ for(t in 1:19){
 plot(n)
 ```
 
-<<<<<<< HEAD
 Es poco creible que la población siga y siga creciendo como $n(t) = n(0) \lambda^{t}$. Una opción es pensar que la tasa de incremento poblacional decrece con el tamaño poblacional (modelo logístico).
-=======
-Es poco creible que la poblaci?n siga y siga creciendo como $n(t) = n(0) \lambda^{t}$. Una opción es pensar que la tasa de incremento poblacional decrece con el tamaño poblacional (modelo logístico).
->>>>>>> 3e89ca3ef8a1cabdec71e918ff5eeb95fac2eb25
 
 ```{r}
 lambda <- 1.8
@@ -240,12 +236,8 @@ plot(1:length(n), n, type="l", lwd=2, xlab="tiempo")
 -----------------------------------------------------------------------------
 
 #  Escribiendo Funciones 
-
-<<<<<<< HEAD
 Un aspecto clave de la programación es escribir funciones. Una función es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una función para el modelo logístico:
-=======
-Un aspecto clave de la programaci?n es escribir funciones. Una función es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una función para el modelo logístico:
->>>>>>> 3e89ca3ef8a1cabdec71e918ff5eeb95fac2eb25
+
 ```{r}
 logistic <- function(n0,rd,K,nyr=10){
   n <- numeric(nyr)
@@ -257,9 +249,9 @@ logistic <- function(n0,rd,K,nyr=10){
 }
 ```		
 Esta función tiene como argumentos a n0, rd, K y el número de años (nyr) que queremos simular.
-<<<<<<< HEAD
 
 A menos que le digamos otra cosa, R respeta el orden en que definimos los inputs de la función. Entonces, si queremos simular la trayectoria de una población que sigue un modelo logístico con n0=1, rd=1.5, y K=100 por 10 generaciones, podemos hacer:
+
 ```{r}
 n <- logistic(1,1.5,100) 
 #y graficar
@@ -268,20 +260,12 @@ plot(n)
 
 En este caso, no le dijimos a la función que queríamos nyr=10 porque está definido por defecto. 
 
-=======
-
-A menos que le digamos otra cosa, R respeta el orden en que definimos los inputs de la funci?n. Entonces, si queremos simular la trayectoria de una población que sigue un modelo logístico con n0=1, rd=1.5, y K=100 por 10 generaciones, podemos hacer:
 ```{r}
 n <- logistic(1,1.5,100) 
 #y graficar
 plot(n)
 ```
 
-
-
-En este caso, no le dijimos a la función que queríamos nyr=10 porque está definido por defecto. 
-
->>>>>>> 3e89ca3ef8a1cabdec71e918ff5eeb95fac2eb25
 En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser más explícitos:
 ```{r}
 n <- logistic(n0=1, rd=1.5, K=100, nyr=20)
@@ -301,24 +285,9 @@ n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
 ```
 -----------------------------------------------------------------------------
 # Ejercicios:
-<<<<<<< HEAD
- (5) qué pasa si cambiamos n(0)?
- (6) y si cambiamos rd?
+ (5) qué pasa si cambiamos $n(0)$?
+ (6) y si cambiamos $r_d$?
  
- Ricker (1954), cambió la relación lineal entre lambda y n por exp(-a*n)
+ Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a*n)$:
  (7) simular trayectorias poblacionales con el modelo de Ricker y compararlo 
      con el logístico
-=======
- (5) ?qu? pasa si cambiamos n(0)?
- (6) ?y si cambiamos rd?
- 
- Ricker (1954), cambi? la relaci?n lineal entre lambda y n por exp(-a*n)
- (7) simular trayectorias poblacionales con el modelo de Ricker y compararlo 
-     con el log?stico
-  
-
-
-
-
-
->>>>>>> 3e89ca3ef8a1cabdec71e918ff5eeb95fac2eb25
