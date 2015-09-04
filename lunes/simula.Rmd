@@ -1,7 +1,7 @@
 ---
-title: "Probabilidades II"
+title: "Probabilidades I"
 author: "jmm"
-date: "8 de Abril del 2015"
+date: "4 de Septiembre del 2015"
 output:
   pdf_document:
     fig_caption: yes
@@ -99,100 +99,10 @@ quantile(y,  probs = c(0.025,0.975))
 ## Ejercicios:
 
 1. Asumiendo una distribución de Poisson:
-  + ?cu?l es la probabilidad te?rica de obtener $y=0$ para $\lambda = 1$?
-  + ?cu?l es la probabilidad te?rica de $y > 2$?
-  + comparen la probabilidad de y=0 para $\lambda = 1$ de la distribuci?n te?rica con la obtenida emp?ricamente con muestras de 10, 100, 1000 y 10000 observaciones
-  + comparen las diferencias entre el valor esperado de $y$ para la distribuci?n te?rica con los valores emp?ricos de muestras de 10, 100, 1000 y 10000 observaciones
+  + ¿cuál es la probabilidad teórica de obtener $y=0$ para $\lambda = 1$?
+  + ¿cuál es la probabilidad teórica de $y > 2$?
+  + comparar la probabilidad de y=0 para $\lambda = 1$ de la distribución teórica con la obtenida empíricamente con muestras de 10, 100, 1000 y 10000 observaciones
+  + comparar las diferencias entre el valor esperado de $y$ para la distribución teórica con los valores empíricos de muestras de 10, 100, 1000 y 10000 observaciones
   + lo mismo para los intervalos de 95%
 
-2. ?c?mo cambia la forma de la distribuci?n de Poisson a medida que cambia $\lambda$? (pueden ver esto simulando datos y haciendo histogramas o graficando las probabilidades te?ricas)
-
-
--------------
-
-# Simulando un Proceso Estoc?stico
-
-Para una poblaci?n "univoltina" observamos que el n?mero de descendientes por hembra que llegan a adulto se puede representar con una distribuci?n de Possion con $\lambda = 1.2$. Suponiendo que la poblaci?n arranca en $10$ individuos, para $12$ generaciones podemos hacer una simulaci?n:
-
-````{r, fig.width = 5, fig.height = 5, fig.cap="Una trayectoria poblacional para $n_0=10$ y tasa de crecimiento $\\lambda = 1.2$"}
-set.seed(1234)
-lambda <- 1.2
-niter <- 12
-n <- numeric(niter)
-n0 <- 10
-n[1] <- n0
-
-for(i in 2:niter){
-  n[i] <- sum(rpois(n[i-1],lambda))
-}
-
-plot(n,type="o", xlab="generaciones")
-```
-
-Pero esa es solo una posible realizaci?n de la din?mica poblacional estoc?stica. Para ver que esperamos que ocurra tenemos que hacer r?plicas:
-
-````{r}
-nrep <- 100
-N <- matrix(NA,niter,nrep)
-N[1,] <- n0
-for(i in 2:niter){
-  N[i,] <- rpois(nrep,lambda*N[i-1,])
-}
-```
-```{r, fig.width = 5, fig.height = 5, fig.cap="R?plicas de trayectorias poblacionales (en gris) y trayectoria promedio (l?nea gruesa)."}
-matplot(N, type="l", col="gray", xlab="generaciones")
-lines(rowMeans(N),lwd=3)
-````
-
-Vemos que hay bastante variabilidad entre trayectorias e incluso hay casos en los que la poblaci?n se extingue:
-````{r}
-N[niter,]
-````
-
-Esta variabilidad poblacional debido a aleatoriedad en el n?mero de "reclutas" se llama **estocasticidad demogr?fica**.
-
-Podemos incluir densodependencia haciendo que $\lambda$ sea una funci?n del tama?o poblacional. Podemos hacer entonces una versi?n estoc?stica del modelo log?stico $\lambda (n) = 1 + r (1-n(t)/K)$
-
-````{r}
-K <- 100
-r <- 0.2
-niter <- 100
-nrep <- 100
-N <- matrix(NA,niter,nrep)
-N[1,] <- n0
-for(i in 2:niter){
-  N[i,] <- rpois(nrep,lambda= (1+r*(1-N[i-1,]/K))*N[i-1,])
-}
-```
-```{r, fig.width = 5, fig.height = 5, fig.cap="Modelo log?stico estoc?stico. R?plicas de trayectorias poblacionales (en gris) y trayectoria promedio (l?nea gruesa)."}
-matplot(N, type="l", col="gray", xlab="generaciones")
-lines(rowMeans(N),lwd=3)
-````
-
-Hasta ahora dejamos fijos a los par?metros poblacionales, pero podr?a ser que haya a?os buenos y a?os malos, de manera que en los a?os buenos, el valor medio de supervivientes sea mayor en el modelo de crecimiento exponencial, o la capacidad de carga en el modelo log?stico sea mayor, etc.
-
-Para el modelo de crecimiento exponencial, podemos definir $\lambda_b = 1.5$ para a?os buenos y $\lambda_m = 0.5$ para a?os malos. Si adem?s definimos que la proporci?n de a?os buenos es $p=0.7$, tenemos que en promedio $\lambda = p \lambda_b + (1 - p) \lambda_m = 1.2$ igual que antes. Sin embargo, la trayectorias poblacionales son muy diferentes. Esta variabilidad en los par?metros poblacionales se interpreta como **estocasticidad ambiental**.
-
-Para simular a?os buenos y malos siguiendo la proporci?n $p$ podemos generar un n?mero entre 0 y 1 con distribuci?n uniforme usando ```runif``` y luego ver si es mayor o menor que $p$. Alternativamente, podemos usar ```sample``` como en el ejemplo que sigue.
-
-````{r}
-nrep <- 3
-niter <- 20
-lambda_b <- 1.5
-lambda_m <- 0.5
-
-p <- 0.7
-N <- matrix(NA,niter,nrep)
-N[1,] <- n0
-for(i in 2:niter){
-  lambda <- sample(c(lambda_b,lambda_m),size=nrep,replace=TRUE,prob=c(p, 1-p))
-  N[i,] <- rpois(nrep,lambda*N[i-1,])
-}
-```
-```{r, fig.width = 5, fig.height = 5, fig.cap="R?plicas de trayectorias poblacionales con etocasticidad ambiental."}
-matplot(N, type="l", col=1,lwd=2, xlab="generaciones")
-````
-
-## Desaf?o:
-
-Armar una simulaci?n para estocasticidad ambiental con autocorrelaci?n temporal y ver c?mo cambia la probabilidad de extinci?n en 30 generaciones seg?n el grado de autocorrelaci?n. Usar los mismos par?metros que en el ejemplo de arriba
+2. ¿cómo cambia la forma de la distribución de Poisson a medida que cambia $\lambda$? (pueden ver esto simulando datos y haciendo histogramas o graficando las probabilidades teóricas)
