@@ -5,7 +5,13 @@ date: "`r Sys.Date()`"
 output:
   pdf_document:
     fig_caption: yes
+    
 ---
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = TRUE)
+opts_knit$set(eval.after='fig.cap')
+```
 
 # Objetivos:
 
@@ -43,15 +49,15 @@ lambda <- 1.2
 Ahora simulamos datos y vemos la frecuencia en un histograma
 ````{r, fig.width = 5, fig.height = 5, fig.cap= paste("Histograma de datos simulados de una Poisson con $\\lambda =$", lambda)}
 y <- rpois(n = n, lambda = lambda)
-hist(y, xlab="valores", main="")
+hist(y, xlab="Valores", main="")
 ```
 
 Una vez que tenemos "datos" como estos, podemos ver las frecuencias relativas y compararlas con la distribución teórica usando la función `dpois`.
-```{r, fig.width = 5, fig.height = 5, fig.cap="distribución empírica y teórica para Poisson con $lambda = 1.2$"}
+```{r, fig.width = 5, fig.height = 5, fig.cap=paste("Distribución empírica y teórica para Poisson con $\\lambda =$", lambda)}
 
 f <- factor(y,levels=0:max(y))
 obsprobs <- table(f)/n
-plot(obsprobs, xlab="valores", ylab="proporción")
+plot(obsprobs, xlab="Valores", ylab="Proporción")
 tprobs <- dpois(x = 0:max(y), lambda = lambda) 
 points(0:max(y), tprobs, pch=16, col=2) 
 ```
@@ -80,9 +86,9 @@ dpois(3,lambda=lambda)
 ```
 
 El equivalente empírico de la función acumulada es la funciónn `ecdf`:
-```{r, fig.width = 5, fig.height = 5, fig.cap="Acumulada empírica y teórica para Poisson con $\\lambda =$ ```{r} lambda`` . "}
+```{r, fig.width = 5, fig.height = 5, fig.cap=paste("Acumulada empírica y teórica para Poisson con $\\lambda =$", lambda)}
 eF <- ecdf(y)
-plot(eF, xlab="valores", ylab="Función de Probabilidad Empírica", main="")
+plot(eF, xlab="Valores", ylab="Función de Probabilidad Empírica", main="")
 lines( 0:6, ppois(0:6, lambda=1), type="s", col=2)
 ```
 
@@ -115,7 +121,8 @@ quantile(y,  probs = c(0.025,0.975))
 
 Podemos hacer algo parecido a lo que hicimos con la distribución de Poisson para el arquetipo de las distribuciones contínuas:
 
-```{r, fig.width = 5, fig.height = 5, fig.cap="Histograma de datos simulados, densidad empírica (en negro) y teórica (en rojo) de una distribución Normal con $\\mu=0$ y $\\sigma=1$. "}
+```{r, fig.width = 5, fig.height = 5, fig.cap = paste("Histograma de datos simulados, densidad empírica (en negro) y teórica (en rojo) de una distribución Normal con $\\mu=$", mu, "y $\\sigma=$", sigma)}
+
 n <- 1000
 mu <- 0
 sigma <- 1
