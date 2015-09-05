@@ -1,7 +1,7 @@
 ---
 title: "Probabilidades"
-author: "jmm"
-date: "4 de Septiembre del 2015"
+author: "[Juan Manuel Morales](https://sites.google.com/site/pajarom/) "
+date: "`r Sys.Date()`"
 output:
   pdf_document:
     fig_caption: yes
@@ -41,7 +41,7 @@ lambda <- 1.2
 ```
 
 Ahora simulamos datos y vemos la frecuencia en un histograma
-````{r, fig.width = 5, fig.height = 5, fig.cap="Histograma de datos simulados de una Poisson con $lambda$ = 1.2."}
+````{r, fig.width = 5, fig.height = 5, fig.cap= paste("Histograma de datos simulados de una Poisson con $\\lambda =$", lambda)}
 y <- rpois(n = n, lambda = lambda)
 hist(y, xlab="valores", main="")
 ```
@@ -80,7 +80,7 @@ dpois(3,lambda=lambda)
 ```
 
 El equivalente empírico de la función acumulada es la funciónn `ecdf`:
-```{r, fig.width = 5, fig.height = 5, fig.cap="Acumulada empírica y teórica para Poisson con $lambda = 1.2$"}
+```{r, fig.width = 5, fig.height = 5, fig.cap="Acumulada empírica y teórica para Poisson con $\\lambda =$ ```{r} lambda`` . "}
 eF <- ecdf(y)
 plot(eF, xlab="valores", ylab="Función de Probabilidad Empírica", main="")
 lines( 0:6, ppois(0:6, lambda=1), type="s", col=2)
@@ -105,7 +105,7 @@ quantile(y,  probs = c(0.025,0.975))
   + ¿cuál es la probabilidad teórica de $y > 2$?
   + comparar la probabilidad de $y=0$ para $\lambda = 1$ de la distribución teórica con la obtenida empíricamente con muestras de $10$, $100$, $1000$ y $10000$ observaciones
   + comparar las diferencias entre el valor esperado de $y$ para la distribución teórica con los valores empíricos de muestras de $10$, $100$, $1000$ y $10000$  observaciones
-  + lo mismo para los intervalos de $95%$
+  + lo mismo para los intervalos de 95%
 
 2. ¿cómo cambia la forma de la distribución de Poisson a medida que cambia $\lambda$? (pueden ver esto simulando datos y haciendo histogramas o graficando las probabilidades teóricas)
 
