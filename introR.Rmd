@@ -4,7 +4,7 @@ author: "[Juan Manuel Morales](https://sites.google.com/site/pajarom/) "
 date: "`r Sys.Date()`"
 fontsize: 12pt
 output:
-   pdf_document:
+   pdf_document
 
 ---
 ```{r, echo=FALSE}
@@ -117,7 +117,9 @@ n[idx]
 
 Algo interesante para ver en un set de datos como este es el "factor reproductivo" o "tasa finita de incremento la población", que no es otra cosa que $n(t+1) / n(t)$. Por ejemplo, para el 2010 la tasa de crecimiento fue de: `n[2]/n[1]` $=$ `r n[2]/n[1]`.
 
-Para no repetir las cuentas año por año podemos hacer un *for loop* pero antes necesitamos generar un vector donde vamos a guardar los resultados:
+## Bucles (*loops*)
+
+Para no repetir las cuentas año por año podemos hacer un "bucle" (*for loop*) pero antes necesitamos generar un vector donde vamos a guardar los resultados:
 
 ```{r}
 tasa <- numeric(length(n) - 1)
@@ -217,9 +219,7 @@ for(t in 1:(length(n)-1)){
 plot(1:length(n), n, type="l", lwd=2, xlab="tiempo")
 ```
 
---------------------------------------------------------------------------
-
-#  Escribiendo Funciones 
+##  Escribiendo Funciones 
 Un aspecto clave de la programación es escribir funciones. Una función es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una función para el modelo logístico:
 
 ```{r}
@@ -257,9 +257,9 @@ K <- 100
 nyears <- 20  # no necesariamente usamos el mismo nombre
 n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
 ```
-----------------------------------------------------------------------
+-------------------------------------------------------------------
 # Ejercicios:
 
- Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a*n)$:
- (7) simular trayectorias poblacionales con el modelo de Ricker y compararlo 
+ Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a*n)$. 
+ Escribir una función para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logístico.
      con el logístico
