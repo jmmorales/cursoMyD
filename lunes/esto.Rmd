@@ -1,0 +1,131 @@
+---
+title: "M?s Cuestiones Estoc?sticas..."
+author: "jmm"
+date: "Viernes 09 de Abril del 2015"
+output:
+  pdf_document:
+    fig_caption: yes
+---
+# Distribuciones cont?nuas
+
+Podemos hacer algo parecido a lo que hicimos la clase pasada con la distribuci?n de Poisson para el arquetipo de las distribuciones cont?nuas:
+
+```{r, fig.width = 5, fig.height = 5, fig.cap="Histograma de datos simulados, densidad emp?rica (en negro) y te?rica (en rojo) de una distribuci?n Normal con $\\mu=0$ y $\\sigma=1$. "}
+n <- 1000
+mu <- 0
+sigma <- 1
+
+y <- rnorm(n, mean = mu, sd = sigma)
+
+hist(y, breaks = 60, freq = FALSE, main="")
+# podemos agregar sobre este histograma una estimaci?n de densidades
+lines(density(y), lwd = 2)
+xvec <- seq(min(y)-0.5,max(y)+0.5, by=0.1) # secuencia de valores de referencia
+lines(xvec, dnorm(xvec, mean = mu, sd = sigma), lwd = 3, col = "red", lty=2)
+```
+
+?Cu?l es la probabilidad de encontrar un valor "cercano" a cero? ?por qu? "cercano" y no igual?
+```{r}
+dnorm(0, mean=mu, sd=sigma)
+```
+
+?Cu?l es la probabilidad de $y > 1.96$?
+```{r}
+pnorm(1.96, mean = mu, sd = sigma, lower.tail = FALSE)
+```
+
+Y el intervalo de $95$ porciento?
+```{r}
+qnorm(c(0.025, 0.975), mean = mu, sd = sigma)
+````
+
+## Ejercicios: 
+1. Estimar las mismas cantidades usando estimaciones emp?ricas.
+2. ?C?mo cambia la forma de la distribuci?n cuando cambia $\sigma$?
+3. Otras distribuciones. Ver otras distribuciones del bestiario para familiarizarse con las formas que pueden tener y el tipo de datos que pueden llegar a representar.
+
+----------------
+
+# Bootstrap 
+
+**Objetivo**: Revisar los conceptos b?sicos de remuestreo de datos
+
+## Ejemplo b?sico: 
+Estimaci?n de la media e Intervalo de Confianza de datos de una distribucion Gamma. Para remuestrear datos usamos la funci?n ```sample```. 
+
+```{r}
+datos <- rgamma(50,shape = 0.8,rate=1)   # simulo 50 datos
+n <- length(datos)                       # n?mero de observaciones
+B <- 2000                                # n?mero de muestras de bootstrap 
+theta_b <- numeric(B)                    # vector donde se van a guardar los resultados 
+
+for (i in 1:B){                          
+    y <- sample(datos,size=n,replace=T) # bootstrap sample
+    theta_b[i] <- mean(y)               # en gral hacemos algo m?s interesante aqu?...
+}
+
+mb <- mean(theta_b)
+mb
+se <- sqrt(sum((theta_b-mb)^2)/ (B-1)) # esto es el desv?o est?ndar de un estadistico muestreal
+                                       # lo podemos calcular directamente como sd(theta_b)
+se
+ci = quantile(theta_b,probs=c(0.025,0.975)) # intervalo que contiene el 95% de los valores
+ci
+```
+
+
+## Ejemplo: Poner a prueba un "Correlated Random Walk"
+
+Cargamos datos de localizaciones de elk reintroducidos y graficamos trayectorias de movimiento y el desplazamiento cuadrado
+
+```{r, fig.width = 8, fig.height = 5, fig.cap="trayectoria y desplazamiento cuadrado"}
+setwd("~/Dropbox/ME")
+elk <- read.table("elkGPS1.txt", header = T)
+op<-par(mfrow=c(1,2))
+plot(elk$Easting, elk$Northing, type="o", asp=1, xlab="easting", ylab="northing")
+R2 <- (elk$Easting/1000 - elk$Easting[1]/1000)^2 + (elk$Northing/1000 - elk$Northing[1]/1000)^2
+plot(R2, type="l", xlab="t (d?as)")
+par(op)
+```
+
+?Les parece que esto podr?a haber sido generado por un CRW? Para responder a esta pregunta, vamos a obtener los percentiles de R2 bajo el supuesto de que la trayectoria se genera con un CRW
+
+```{r, fig.width = 7, fig.height = 5, fig.cap="Desplazamiento cuadrado observado (l?nea con puntos) y simulado (l?neas grises). Las l?neas s?lidas marcan los percentiles de 95%."}
+# definimos los "pasos" y "giros" que ya est?n calculados en el set de datos
+steps <- elk$km_day
+turns <- elk$turns
+sts <- steps[2:(length(steps)-1)]  #elimino el primer y ultimo dato que son NA?s
+trns <- turns[2:(length(steps)-1)] #elimino el primer y ultimo dato que son NA?s
+
+# simulamos una cantidad de CRWs
+B <- 1000                                 
+nobs <- length(sts)
+R2B <- matrix(NA,B,nobs)                  
+
+for(j in 1:B){
+  x <- numeric(nobs)
+  y <- numeric(nobs)
+  compass <- numeric(nobs)
+
+  # simulamos CRW
+  for(i in 2:length(sts)){
+    compass[i] <- compass[i-1] + sample(trns, size=1, replace=T)
+    steplength <- sample(sts, size=1)
+    x[i] <- x[i-1] + steplength*cos(compass[i])
+    y[i] <- y[i-1] + steplength*sin(compass[i])
+  }                                            
+  R2B[j,] <- (x-x[1])^2 + (y-y[1])^2 
+}  
+
+# calcular percentiles
+per <- matrix(NA, nobs,2)
+for(i in 1:nobs){
+per[i,] <- quantile(R2B[,i], probs=c(0.025,0.975))
+}  
+
+plot(R2, type="o", ylim=c(0, max(R2B)), pch=16, xlab="t (d?as)", ylab="Desplazamiento al Cuadrado")
+for(i in 1:B) lines(R2B[i,], col="gray")  
+lines(per[,1], lwd=2)
+lines(per[,2], lwd=2)
+lines(R2, type="o", pch=16)
+```

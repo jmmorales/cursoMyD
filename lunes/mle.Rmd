@@ -1,0 +1,51 @@
+---
+title: "MLE"
+author: "[Juan Manuel Morales](https://sites.google.com/site/pajarom/) "
+date: "`r Sys.Date()`"
+fontsize: 12pt
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+```
+
+
+#   Máxima Verosimilitud (Likelihood) 
+
+## objetivos: 
+ - relacionar el "likelihood" de datos con parámetros de una distribución 
+ - familiarizarse con curvas de likelihood y log-likelihood 
+ - comprobar que la forma de la curva de likelihood depende del tamaño muestreal
+ - aprender a usar herramientas para encontrar óptimos
+
+Vimos que las [funciones de densidad](https://es.wikipedia.org/wiki/Función_de_densidad_de_probabilidad) nos dan la probabilidad de observar un valor determinado de una variable aleatoria (para variables continuas nos dan la probabilidad alrededor de un valor). Por ejemplo, para una distribución de Poisson, la probabilidad para un valor $y$ es $\lambda^{y} \exp(- \lambda) / y!$ (donde $!$ es el [factorial](https://es.wikipedia.org/wiki/Factorial) de $y$, no que $y$ sea copado...). Entonces, para una variable aleatoria que asumimos tiene una distribución de Poisson con $\lambda=2$ la probabilidad de observar un cero ($y=0$) es de $2^{0} \exp(-2)/0! = \exp(-2)$. En `R` usamos la función `dpois` para hacer este tipo de cuentas. Para este ejemplo escribimos `dpois(0, lambda=2)`. 
+
+Normalmente tenemos un conjunto de datos, por ejemplo números de renovales por metro cuadrado de muestreo en un bosque: $y = 1, 0, 2, 1, 0, 0, 1, 1, 2, 2$. Si asumimos que estos datos se pueden describir como el resultado de un proceso aleatorio de tipo Poisson, y que además **las observaciones son independientes**, podemos calcular la probabilidad del conjunto de datos como el producto de las probabilidades de las observaciones:
+
+$$
+p(y)= \prod_i^n{ \frac{\lambda^{y_i} \exp(- \lambda)} {y_i!} }
+$$
+
+Podemos ver que el producto ($\prod$) se hace usándo $i$ como índice para cada observación del set de datos $y$,  desde $i=1$ hasta $i=n$ que es el tamaño de $y$. Esta probabilidad de observar los datos es lo que llamamos *likelihood* o *verosimilitud*. Para hacer la cuenta de arriba nos falta definir el parámetro $\lambda$. La probabilidad de los datos depende entonces no sólo de los valores presentes en el set de datos sino también de la distribución utilizada y el valor del o los parámetros de la distribución. Veamos como calcular la probabilidad de estos datos en `R` asumiendo $\lambda = 1$:
+
+```{r, tidy=TRUE}
+y <- c(1, 0, 2, 1, 0, 0, 1, 1, 2, 2)
+lambda <- 1
+p.y <- dpois(y, lambda=lambda)
+p.y 
+prod(p.y)
+```
+
+Como las probabilidades son números que van entre $0$ y $1$, el producto de varias probabilidades resulta en números muy pequeños. Entonces, para evitar problemas numéricos preferimos trabajar con la suma de los logaritmos de las probabilidades, es decir con el logaritmo del *likelihood*. En `R`, podemos usar la opción `log = TRUE` dentro de las funciones de densidad.  
+```{r, tidy=TRUE}
+y <- c(1, 0, 2, 1, 0, 0, 1, 1, 2, 2)
+lambda <- 1
+ll.y <- dpois(y, lambda=lambda, log = TRUE)
+ll.y 
+sum(ll.y)
+```
+
+Una vez que definimos la distribución, podemos buscar la combinación de parámetros que maximiza la probabilidad de observar los datos. En este caso tenemos un sólo parámetro ($\lambda$) 
