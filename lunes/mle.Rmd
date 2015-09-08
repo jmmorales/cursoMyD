@@ -10,6 +10,8 @@ output: pdf_document
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(fig.width=5, fig.height=4, tidy=TRUE, results='markup',
+                      echo=TRUE, warning=FALSE, message=FALSE)
 ```
 
 
@@ -62,26 +64,32 @@ sum(dpois(y, lambda=lambda, log = TRUE))
 Con un $\lambda$ de $2$ la *log likelihood* de los datos empeora, pero podemos seguir probando distintos valores de $\lambda$ hasta encontrar el que hace más posible al set de datos. Esta es la idea detrás de los análisis de máxima verosimilitud (a falta de mejor nombre) o de *maximum likelihood* (si estamos dispuestos a usar palabras en inglés). Normalmente tenemos más de un parámetro en nuestro modelo de datos, y usamos aglún algoritmo de búsqueda para encontrar la combinación de parámetros que hace más probables a nuestros datos (por tradición, los algoritmos buscan minimizar el menos logaritmo de la verosimilitud de nuestros datos).
 
 \newpage
-## Ejemplo:
-Datos de remoción de frutos en bosque continuo y fragmentos en 3 sitios pareados colectados por Mariano Rodriguez-Cabal http://sites.google.com/site/modelosydatos/Rodriguez-Cabal_07.pdf
+
+## Ejemplo: Remoción de Frutos
+
+Mariano Rodriguez-Cabal estudió la remoción de frutos de quintral por parte del monito del monte en bosque continuo y fragmentos en 3 sitios pareados con la idea de ver si la fragmentación afectabla la interacción entre este marsupial y el muérdago. El trabajo  está dispoible [aquí](http://sites.google.com/site/modelosydatos/Rodriguez-Cabal_07.pdf)
  
-Los datos son de número de frutos removidos de un total disponible. Podemos usar una distribución Binomial para capturar la estocasticidad en el proceso de remoción de frutos. Es decir, asumimos que la distribución Binomial tiene sentido para representar el proceso que genera los datos.
-
-
+Los datos son de número de frutos removidos de un total disponible. Podemos usar una distribución Binomial para capturar la variabilidad (estocasticidad) en el proceso de remoción de frutos. Es decir, asumimos que la distribución Binomial tiene sentido para representar el proceso que genera los datos.
+ 
 ```{r}
 
 quintral <- read.table("~/cursoMyD/Data/quintral.txt", header = TRUE)
 
 ```
 
-Para mirar los datos se puede hacer:
+Para ver como están organizados los datos podemos hacer:
 ```{r}
-quintral
-str(quintral)  # para ver la estructura de los datos, qué variables y de qué tipo  
-```
-Si no nos acordamos cómo es la distribución Binomial o cómo usarla en R podemos pedir ayuda: `?dbinom`
+str(quintral)  
 
-Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la probabilidad de remoción es 0.5
+```
+Vemos que se trata de un *data frame* que es la manera preferida de `R` para organizar datos. Los data frames tienen a las observaciones en filas y a las variables en columnas. Las variables individuales se pueden acceder escribiendo el nombre del data frame seguido del signo $ y el nombre de la variable. Por ejemplo, si queremos ver los valores de frutos disponibles en las tres primeras observaciones hacemos:
+
+```{r}
+quintral$Frutos[1:3]
+```
+
+Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la probabilidad de remoción es 0.5 (si no nos acordamos cómo es la distribución Binomial o cómo usarla en `R` podemos pedir ayuda: `?dbinom`)
+
 ```{r}
 dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=0.5)
 ```
@@ -91,18 +99,22 @@ Normalmente trabajamos con log-likelihoods:
 dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=0.5,log=TRUE)
 ```
 
+\newpage
+
 ¿Cómo cambia la probabilidad de observar ese dato cuando cambiamos el parámetro de probabilidad de éxito (remoción) en la Binomial?
 
-Podemos ver esto gráficamente:
-````{r, fig.width = 7, fig.height = 5}
-op <- par(mfrow=c(1,2),lwd=2, bty="l")   
+Como en este caso el likelihood depende de un solo parámetro, podemos ver esto gráficamente:
+
+```{r, fig.width = 5, fig.height = 4}
+op <- par(mfrow=c(1,2),lwd=2, bty="l", las=1)   
 theta <- seq(0,1,length=1000)    # genera un vector de mil valores entre 0 y 1
 plot(theta, dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta, log=F),
-     type="l", ylab="L")
+     type="l", ylab="L", xlab = expression(theta))
 plot(theta,-dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta, log=T),
-     type="l", ylab="-logL")
+     type="l", ylab="-logL", xlab = expression(theta))
 par(op)
 ```
+
 También podemos ver cómo cambia el Likelihood cuando cambiamos el número de observaciones
 
 ```{r, fig.width = 7, fig.height = 5}
@@ -111,22 +123,22 @@ theta <- seq(0,1,length=1000)
 plot(theta,dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=theta,log=F), 
      type="l",xlab="p(remoción)", ylab="L", main="n = 1")
 nLL2 <- array(0,length(theta))
-for (i in 1:length(theta)) {  # tiene q ir a traves de todos los valores de theta
+for (i in 1:length(theta)) {  
   nLL2[i] <- -sum(dbinom(quintral$Removidos[1:2],size=quintral$Frutos[1:2],
                          prob=theta[i],log=TRUE))
 }
-plot(theta,exp(-nLL2), type = "l",xlab="p(remoción)", ylab="L", main="n=2")
+plot(theta,exp(-nLL2), type = "l",xlab = expression(theta), ylab="L", main="n=2")
 
 nLL10 <- array(0,length(theta))
 for (i in 1:length(theta)) {
   nLL10[i] <- -sum(dbinom(quintral$Removidos[1:10],size=quintral$Frutos[1:10],
                           prob=theta[i],log=TRUE))
 }
-plot(theta,exp(-nLL10), type = "l",xlab="p(remoción)", ylab = "L", main="n=10")
+plot(theta,exp(-nLL10), type = "l",xlab = expression(theta), ylab = "L", main="n=10")
 plot(theta,-dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=theta,log=T), 
      type="l",xlab="p(remoción)", ylab="-logL", main="n=1")
-plot(theta, nLL2, type = "l",xlab="p(remoción)", ylab="-logL", main="n=2", ylim=c(0,100))
-plot(theta, nLL10, type = "l",xlab="p(remoción)", ylab="-logL", main="n=10", ylim=c(0,100))
+plot(theta, nLL2, type = "l",xlab=expression(theta), ylab="-logL", main="n=2", ylim=c(0,100))
+plot(theta, nLL10, type = "l",xlab=expression(theta), ylab="-logL", main="n=10", ylim=c(0,100))
 par(op)
 ```
 
