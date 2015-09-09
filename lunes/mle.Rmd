@@ -1,13 +1,21 @@
 ---
   knitrBootstrap::bootstrap_document:
-    title: "MLE"
+    title: "mle"
     theme: yeti
     highlight: HighlightJS
     theme.chooser: FALSE
     highlight.chooser: FALSE
-    fig_retina: 1
     dev: svg
+    
 ---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.align='left')
+```
+
 
 #   Máxima Verosimilitud (Likelihood) 
 
@@ -29,7 +37,7 @@ Podemos ver que el producto ($\prod$) se hace usándo $i$ como índice para cada
 
 Veamos ahora como calcular la probabilidad de estos datos en `R` asumiendo $\lambda = 1$:
 
-```{r, tidy=TRUE}
+```{r}
 y <- c(1, 0, 2, 1, 0, 0, 1, 1, 2, 2)
 lambda <- 1
 p.y <- dpois(y, lambda=lambda)
@@ -90,7 +98,7 @@ dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=0.5,log=TRUE)
 
 ¿Cómo cambia la probabilidad de observar ese dato cuando cambiamos el parámetro de probabilidad de éxito (remoción) en la Binomial? Como en este caso el likelihood depende de un solo parámetro, podemos responder a esta pregunta gráficamente. 
 
-```{r, fig.width = 5, fig.height = 3.5}
+```{r}
 op <- par(mfrow=c(1,2),lwd=2, bty="l", las=1)   
 theta <- seq(0,1,length=1000)
 plot(theta, dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta, log=F),
@@ -102,7 +110,7 @@ par(op)
 
 También podemos ver cómo cambia el Likelihood cuando cambiamos el número de observaciones que consideramos. ¿Cómo interpretan estos cambios?
 
-```{r, fig.width = 7, fig.height = 5}
+```{r}
 op<-par(mfrow = c(2,3), lwd=2, bty="l", cex.lab=1.5, las = 1, mar = c(5,4,1,1))
 theta <- seq(0,1,length=1000)
 plot(theta,dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta,log=F), 
@@ -311,7 +319,7 @@ plot(tmp,plogis(tmp),type="l", lwd=2)
 De esta forma, podemos usar covariables para la probabilidad de éxito de una binomial.
 Todo junto queda:
 
-```{r, fig.width = 7, fig.height = 8}
+```{r}
 condor <- read.table("https://sites.google.com/site/modelosydatos/condor.txt", header=T)
 head(condor) # revisamos los datos
                                                      
