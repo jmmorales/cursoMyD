@@ -1,38 +1,33 @@
 ---
-title: "intro R"
-author: "[Juan Manuel Morales](https://sites.google.com/site/pajarom/) "
-date: "`r Sys.Date()`"
-fontsize: 12pt
-output:
-   pdf_document
-
+  knitrBootstrap::bootstrap_document:
+    title: "intro R"
+    theme: cerulean
+    highlight: HighlightJS
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+    dev: svg
+    
 ---
+
 ```{r, echo=FALSE}
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(fig.width=5, fig.height=4, tidy=TRUE, results='markup',
-                      echo=TRUE, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.align='left')
 ```
+
+
 # R de reproducibilidad
 
-Hoy en d√≠a, los cient√≠ficos deben estar capacitados para "sacarle el jugo" a distintas fuentes de informaci√≥n. Parte del trabajo consiste en procesar bases de datos, resumir, graficar, y ajustar modelos a datos. Trabajar con herramientas tipo Excel no solo es limitante (y poco elegante) sino que adem√°s atenta contra la "reproducibilidad" de la investigaci√≥n ya que normalmente no nos queda una documentaci√≥n detallada de c√≥mo se llega a un resultado o un gr√°fico en particular (hay mucho movimiento y "click" de mouse de por medio). La reproducibilidad es (o deber√≠a ser) un est√°ndar m√≠nimo para el trabajo cient√≠fico. Si bien, el hecho de que algo sea reproducible no quiere decir que sea correcto, al menos lo hace m√°s f√°cil de evaluar, de revisar y de re-utilizar. Un paso importante para lograr la reproducibilidad es hacer todo con instrucciones escritas (*scripts*) en lugar de con el mouse.
+Hoy en dÌa, los cientÌficos deben estar capacitados para "sacarle el jugo" a distintas fuentes de informaciÛn. Parte del trabajo consiste en procesar bases de datos, resumir, graficar, y ajustar modelos a datos. Trabajar con herramientas tipo Excel no solo es limitante (y poco elegante) sino que adem·s atenta contra la "reproducibilidad" de la investigaciÛn ya que normalmente no nos queda una documentaciÛn detallada de cÛmo se llega a un resultado o un gr·fico en particular (hay mucho movimiento y "click" de mouse de por medio). La reproducibilidad es (o deberÌa ser) un est·ndar mÌnimo para el trabajo cientÌfico. Si bien, el hecho de que algo sea reproducible no quiere decir que sea correcto, al menos lo hace m·s f·cil de evaluar, de revisar y de re-utilizar. Un paso importante para lograr la reproducibilidad es hacer todo con instrucciones escritas (*scripts*) en lugar de con el mouse.
 
-En resumen, para trabajar en ciencia hay que saber un m√≠nimo de programaci√≥n. Si tenemos que elegir en qu√© lenguaje programar, `R` o `Python` parecen las mejores opciones a la fecha, pero `R` es actualmente el m√°s popular entre los ec√≥logos y es el que vamos a usar en este curso. `R` es una implementaci√≥n de dominio p√∫blico del lenguaje estad√≠stico `S` que ha ganado popularidad por varios motivos. Se puede descargar de https://cran.r-project.org/ y funciona en PC, Mac y Linux. Adem√°s de usarse para an√°lisis estad√≠sticos, `R` se puede programar para hacer casi cualquier cosa. Tiene programaci√≥n basada en objetos y programaci√≥n funcional. Hay una creciente comunidad de usuarios, incluyendo a algunos grosos...
+En resumen, para trabajar en ciencia hay que saber un mÌnimo de programaciÛn. Si tenemos que elegir en quÈ lenguaje programar, `R` o `Python` parecen las mejores opciones a la fecha, pero `R` es actualmente el m·s popular entre los ecÛlogos y es el que vamos a usar en este curso. `R` es una implementaciÛn de dominio p˙blico del lenguaje estadÌstico `S` que ha ganado popularidad por varios motivos. Se puede descargar de https://cran.r-project.org/ y funciona en PC, Mac y Linux. Adem·s de usarse para an·lisis estadÌsticos, `R` se puede programar para hacer casi cualquier cosa. Tiene programaciÛn basada en objetos y programaciÛn funcional. Hay una creciente comunidad de usuarios, incluyendo a algunos grosos...
 
-`R` se distribuye con una interfase gr√°fica rudimentaria, pero hay varios motivos para trabajar con `R` atrav√©s de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y crear documentos (como √©ste que fue escrito en RStudio) que inlcuyen c√≥digo de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles atrav√©s de RStudio podremos trabajar mejor y de manera m√°s eficiente. Al principio no parece, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigaci√≥n sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
+`R` se distribuye con una interfase gr·fica rudimentaria, pero hay varios motivos para trabajar con `R` atravÈs de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y crear documentos (como Èste que fue escrito en RStudio) que inlcuyen cÛdigo de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles atravÈs de RStudio podremos trabajar mejor y de manera m·s eficiente. Al principio no parece, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigaciÛn sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
 
-```{r fig.width=2.3, fig.height=2.9,echo=FALSE, fig.cap=""}
-library(png)
-plot(1:2, type='n', main="", xlab="", ylab="", xaxt='n', yaxt='n')
-ima <- readPNG("/Users/juanmanuelmorales/cursoMyD/images/sobchak.png")
-lim <- par()
-rasterImage(ima, lim$usr[1], lim$usr[3], lim$usr[2], lim$usr[4], xlab="", ylab="")
-```
+![walter](http://ztoe.net/wp-content/uploads/2008/11/lebowski.jpg)
 
-\newpage
-
-## Cosas B√°sicas de R
+## Cosas B·sicas de `R`
 
 `R` funciona como una calculadora:
 
@@ -52,9 +47,8 @@ log(10)
 log10(10)
 ```
 
-\newpage
 
-`R` resuelve operaciones l√≥gicas:
+`R` resuelve operaciones lÛgicas:
 
 ```{r}
 2 > 1
@@ -64,7 +58,7 @@ log10(10)
 2 <= 2 
 ```
 
-Un aspecto b√°sico que tenemos que dominar es que `R` trabaja con vectores, matrices, listas y "dataframes".
+Un aspecto b·sico que tenemos que dominar es que `R` trabaja con vectores, matrices, listas y "data frames".
 Empecemos generando un vector:
 
 ```{r}
@@ -72,7 +66,7 @@ n <- c(2, 6, 18, 54, 162, 486)
 ```
 
 El comando `c` concatena los valores entre comas. 
-La flecha `<-` asigna lo que est√° a la derecha al 'objeto' de la izquierda.
+La flecha `<-` asigna lo que est· a la derecha al 'objeto' de la izquierda.
 En vez de `<-` podemos usar `=` pero los puristas de `R` prefieren `<-`.
 
 Para ver los valores del vector en la ventana de comando escribimos su nombre el la ventana de comando y hacemos *enter*:
@@ -85,7 +79,7 @@ Un tipo especial de vector son las secuencias. Para generar una secuencia de val
 yr <- 2009:2014
 ```
 
-Hagamos de cuenta que los vectores `n` y `yr` corresponden a censos de una especie invasora. Si queremos ver el tama√±o poblacional en el a√±o $2010$ hacemos:
+Hagamos de cuenta que los vectores `n` y `yr` corresponden a censos de una especie invasora. Si queremos ver el tamaÒo poblacional en el aÒo $2010$ hacemos:
 ```{r}
 n[2]
 ```
@@ -94,13 +88,13 @@ Una alternativa es hacer:
 ```{r}
 n[yr == 2010]
 ```
-O usar la funci√≥n `which`:
+O usar la funciÛn `which`:
 ```{r}
 idx <- which(yr == 2010)
 n[idx]
 ```
 
-Si queremos ver el tama√±o poblacional desde el $2011$ al $2014$
+Si queremos ver el tamaÒo poblacional desde el $2011$ al $2014$
 
 ```{r}
 n[3:6]
@@ -115,57 +109,57 @@ idx <- which(yr > 2010)
 n[idx]
 ```
 
-Algo interesante para ver en un set de datos como este es el "factor reproductivo" o "tasa finita de incremento la poblaci√≥n", que no es otra cosa que $n(t+1) / n(t)$. Por ejemplo, para el 2010 la tasa de crecimiento fue de: `n[2]/n[1]` $=$ `r n[2]/n[1]`.
+Algo interesante para ver en un set de datos como este es el "factor reproductivo" o "tasa finita de incremento la poblaciÛn", que no es otra cosa que $n(t+1) / n(t)$. Por ejemplo, para el 2010 la tasa de crecimiento fue de: `n[2]/n[1]` $=$ `r n[2]/n[1]`.
 
 ## Bucles (*loops*)
 
-Para no repetir las cuentas a√±o por a√±o podemos hacer un "bucle" (*for loop*) pero antes necesitamos generar un vector donde vamos a guardar los resultados:
+Para no repetir las cuentas aÒo por aÒo podemos hacer un "bucle" (*for loop*) pero antes necesitamos generar un vector donde vamos a guardar los resultados:
 
 ```{r}
 tasa <- numeric(length(n) - 1)
 ```
-Aqu√≠ combinamos dos funciones de `R`: `numeric` y `length`. Para ver qu√© hace `numeric` podemos hacer `?numeric`. 
-Poniendo un signo de pregunta y luego el nombre de una funci√≥n de `R` accedemos a la documentaci√≥n de esa funci√≥n (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso informaci√≥n acerca de funciones que no conocemos es visitando http://rseek.org/.
+AquÌ combinamos dos funciones de `R`: `numeric` y `length`. Para ver quÈ hace `numeric` podemos hacer `?numeric`. 
+Poniendo un signo de pregunta y luego el nombre de una funciÛn de `R` accedemos a la documentaciÛn de esa funciÛn (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso informaciÛn acerca de funciones que no conocemos es visitando http://rseek.org/ .
 
-Volviendo a nuestro *loop*, lo que queremos es repetir una operaci√≥n (o varias) e ir guardando los resultados:
+Volviendo a nuestro *loop*, lo que queremos es repetir una operaciÛn (o varias) e ir guardando los resultados:
 ```{r}
 for(i in 2:length(n)){
   tasa[i-1] <- n[i]/n[i-1]
 }
 ```
 
-El comando `for` en este caso repite en valores de `i` la cuenta $n(t+1)/n(t)$ que en lenguaje de `R` es `n[i]/[i-1]` porque `i` est√° definido desde $2$ hasta el largo del vector `n`. Usamos el valor de `i` para cada iteraci√≥n para ver qu√© valores de `n` usar en la cuenta y para indicar en qu√© posici√≥n del vector `tasa` guardamos el resultado.
+El comando `for` en este caso repite en valores de `i` la cuenta $n(t+1)/n(t)$ que en lenguaje de `R` es `n[i]/[i-1]` porque `i` est· definido desde $2$ hasta el largo del vector `n`. Usamos el valor de `i` para cada iteraciÛn para ver quÈ valores de `n` usar en la cuenta y para indicar en quÈ posiciÛn del vector `tasa` guardamos el resultado.
 
-En este caso podr√≠amos obtener los mismos valores haciendo:
+En este caso podrÌamos obtener los mismos valores haciendo:
 ```{r}
 for(i in 1:(length(n)-1)){
   tasa[i] <- n[i+1]/n[i]
 }
 ```
-Es importante notar que `1:(length(n)-1)` no es lo mismo que `1:length(n)-1`. Compru√©benlo... 
+Es importante notar que `1:(length(n)-1)` no es lo mismo que `1:length(n)-1`. CompruÈbenlo... 
 
-Para ver qu√© sali√≥ de estas cuentas escribimos
+Para ver quÈ saliÛ de estas cuentas escribimos
 ```{r}
 tasa
 ```
 
-Para graficar la tasa de incremento en cada a√±o podemos usar
+Para graficar la tasa de incremento en cada aÒo podemos usar
 ```{r}
 plot(yr[2:length(n)], tasa)
 ```
 
-Para "embellecer" un poco el gr√°fico podemos usar `main`, `xlab`, y `pch`
+Para "embellecer" un poco el gr·fico podemos usar `main`, `xlab`, y `pch`
 ```{r}
-plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="a√±o", pch=16)
+plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="aÒo", pch=16)
 ```
 
-Ahora que aprendimos a usar un *for loop*, podemos ver que en este caso no lo necesit√°bamos! De hecho, una muy buena caracter√≠stica de `R` es que permite hacer operaciones sobre vectores, listas, etc. como veremos oportunamente. De todas formas, es importante aprender a manejar los *loops* ya que son una herramienta b√°sica de programaci√≥n.
+Ahora que aprendimos a usar un *for loop*, podemos ver que en este caso no lo necesit·bamos! De hecho, una muy buena caracterÌstica de `R` es que permite hacer operaciones sobre vectores, listas, etc. como veremos oportunamente. De todas formas, es importante aprender a manejar los *loops* ya que son una herramienta b·sica de programaciÛn.
 
 ```{r}
 tasa <- n[2:6]/n[1:5]
 ```
 
-En cualquier caso, vemos que la tasa de incremento poblacional es constante e igual a `r n[2]/n[1]`. Podemos usar ese valor para proyectar el tam√±o poblacional en el futuro:
+En cualquier caso, vemos que la tasa de incremento poblacional es constante e igual a `r n[2]/n[1]`. Podemos usar ese valor para proyectar el tamaÒo poblacional en el futuro:
 
 ```{r}
 lambda <- 3
@@ -179,7 +173,7 @@ for(i in 7:length(n)){
 plot(yr,n)
 ```
 
-Lo mismo podr√≠amos hacer definiendo condiciones iniciales y usando la f√≥rmula $n(t) = n(0) \lambda^{t}$.
+Lo mismo podrÌamos hacer definiendo condiciones iniciales y usando la fÛrmula $n(t) = n(0) \lambda^{t}$.
 
 ```{r}
 n0 <- 2
@@ -188,22 +182,15 @@ nt <- n0 * lambda^tiempo
 
 plot(tiempo, nt)
 
-# o podemos graficar las dos trayectorias poblacionales
-plot(yr,n)
-lines(tiempo+yr[1], nt, col=2)
-lines(tiempo+yr[1], nt, type="s") 
-
-# 'lines' agrega lineas a un gr√°fico existente
-# 'col' es una opci√≥n de gr√°ficos para definir colores
 ```
 
-Es poco creible que la poblaci√≥n siga y siga creciendo como $n(t) = n(0) \lambda^{t}$. Una opci√≥n es pensar que la tasa de incremento poblacional decrece con el tama√±o poblacional (modelo log√≠stico).
+Es poco creible que la poblaciÛn siga y siga creciendo como $n(t) = n(0) \lambda^{t}$. Una opciÛn es pensar que la tasa de incremento poblacional decrece de manera lineal con el tamaÒo poblacional (modelo logÌstico).
 
 ```{r}
 lambda <- 1.8
 N <- 0:100
-K <- 80  # capacidad de carga
-rd <- lambda - 1 # rd es la tasa de crecimiento poblacional per c√°pita
+K <- 80  
+rd <- lambda - 1 
 plot(N, lambda - rd/K * N, type="l", ylab="Lambda(N)", ylim=c(0,3), lwd=2)
 abline(h=1, lty=2, lwd=2)
 abline(v=K, lty=2, lwd=2)
@@ -220,7 +207,7 @@ plot(1:length(n), n, type="l", lwd=2, xlab="tiempo")
 ```
 
 ##  Escribiendo Funciones 
-Un aspecto clave de la programaci√≥n es escribir funciones. Una funci√≥n es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una funci√≥n para el modelo log√≠stico:
+Un aspecto clave de la programaciÛn es escribir funciones. Una funciÛn es un conjunto de instrucciones que toma "inputs" o "argumentos", usa esos inputs para calcular otros valores que devuelve como resultado. Por ejemplo, podemos escribir una funciÛn para el modelo logÌstico:
 
 ```{r}
 logistic <- function(n0,rd,K,nyr=10){
@@ -232,16 +219,16 @@ logistic <- function(n0,rd,K,nyr=10){
 	return(n)
 }
 ```		
-Esta funci√≥n tiene como argumentos a `n0`, `rd`, `K` y el n√∫mero de a√±os (`nyr`) que queremos simular.
+Esta funciÛn tiene como argumentos a `n0`, `rd`, `K` y el n˙mero de aÒos (`nyr`) que queremos simular.
 
-A menos que le digamos otra cosa, `R` respeta el orden en que definimos los inputs de la funci√≥n. Entonces, si queremos simular la trayectoria de una poblaci√≥n que sigue un modelo log√≠stico con `n0=1`, `rd=1.5`, y `K=100` por `10` generaciones, podemos hacer:
+A menos que le digamos otra cosa, `R` respeta el orden en que definimos los inputs de la funciÛn. Entonces, si queremos simular la trayectoria de una poblaciÛn que sigue un modelo logÌstico con `n0=1`, `rd=1.5`, y `K=100` por `10` generaciones, podemos hacer:
 
 ```{r}
 n <- logistic(1,1.5,100) 
 plot(n)
 ```
 
-En este caso, no le dijimos a la funci√≥n que quer√≠amos `nyr=10` porque est√° definido por defecto. En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser m√°s expl√≠citos:
+En este caso, no le dijimos a la funciÛn que querÌamos `nyr=10` porque est· definido por defecto. En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser m·s explÌcitos:
 ```{r}
 n <- logistic(n0=1, rd=1.5, K=100, nyr=20)
 ```
@@ -249,7 +236,7 @@ Incluso podemos cambiar el orden de los argumentos si es que los llamamos por su
 ```{r}
 n <- logistic(nyr=20, rd=1.5, n0=2, K=100)
 ```
-Mejor a√∫n es definir los valores de los inputs aparte. Por ejemplo:
+Mejor a˙n es definir los valores de los inputs aparte. Por ejemplo:
 ```{r}
 n0 <- 2
 rd <- 1.5
@@ -258,8 +245,20 @@ nyears <- 20  # no necesariamente usamos el mismo nombre
 n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
 ```
 -------------------------------------------------------------------
-# Ejercicios:
 
- Ricker (1954), cambi√≥ la relaci√≥n lineal entre $\lambda$ y $n$ por $exp(-a*n)$. 
- Escribir una funci√≥n para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el log√≠stico.
-     con el log√≠stico
+# Ejercicio:
+
+ Ricker (1954), cambiÛ la relaciÛn lineal entre $\lambda$ y $n$ por $exp(-a*n)$. 
+ Escribir una funciÛn para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logÌstico.
+
+------------------------------------------------------------------- 
+
+
+```{r}
+sessionInfo()
+```
+
+
+author: [Juan Manuel Morales](https://sites.google.com/site/pajarom/) . 6 de Septiembre del 2015. ⁄ltima actualizaciÛn: `r Sys.Date()`
+     
+     
