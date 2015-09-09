@@ -264,5 +264,3 @@ sessionInfo()
 
 
 author: [Juan Manuel Morales](https://sites.google.com/site/pajarom/) . 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`
-     
-     
