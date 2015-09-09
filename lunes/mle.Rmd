@@ -6,14 +6,8 @@
     theme.chooser: FALSE
     highlight.chooser: FALSE
     fig_retina: 1
+    dev: svg
 ---
-
-```{r, echo=FALSE}
-library(knitr)
-options(figure_counter = FALSE)
-opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(fig.width=5, fig.height=4, tidy=TRUE, results='markup', echo=TRUE, warning=FALSE, message=FALSE, tidy.opts=list(blank=FALSE, width.cutoff=55), dev='svg')
-```
 
 #   Máxima Verosimilitud (Likelihood) 
 
@@ -376,7 +370,7 @@ lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
 par(op) 
 ```
 
-#---------------
+\newpage
 
 ```{r}
 sessionInfo()
