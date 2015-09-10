@@ -1,11 +1,13 @@
 ---
-output: 
-  html_document: 
-    fig_caption: yes
-    highlight: tango
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "intro"
     theme: cerulean
-    toc: yes
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
 ---
+
 
 ```{r, echo=FALSE}
 library(knitr)
@@ -254,8 +256,7 @@ n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
  Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a n)$. 
  Escribir una función para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logístico.
 
----------
----------
+*****
 
 ```{r}
 sessionInfo()
