@@ -1,19 +1,25 @@
 ---
-title: "Probabilidades"
-author: "[Juan Manuel Morales](https://sites.google.com/site/pajarom/) "
-date: "`r Sys.Date()`"
-output:
-  pdf_document:
+  knitrBootstrap::bootstrap_document:
+    title: "prob"
+    theme: cerulean
+    highlight: HighlightJS
+    theme.chooser: FALSE
+    highlight.chooser: FALSE
+    dev: svg
     fig_caption: yes
-    
 ---
+
 ```{r, echo=FALSE}
+library(knitrBootstrap)
+library(rmarkdown)
 library(knitr)
 options(figure_counter = FALSE)
-opts_knit$set(eval.after='fig.cap')
+opts_knit$set(eval.after='fig.cap', dev='svg')
 ```
 
-# Objetivos:
+# Probabilidades y Distribuciones
+
+## Objetivos:
 
 * Familiarizarse con distintas distribuciones de probabilidades y con la manera de usarlas en R. 
 * Simular procesos estocástcos. 
@@ -47,13 +53,13 @@ lambda <- 1.2
 ```
 
 Ahora simulamos datos y vemos la frecuencia en un histograma
-````{r, fig.width = 4, fig.height = 4, fig.cap= paste("Histograma de datos simulados de una Poisson con $\\lambda =$", lambda)}
+````{r, fig.width = 4, fig.height = 4, dev='svg'}
 y <- rpois(n = n, lambda = lambda)
 hist(y, xlab="Valores", main="")
 ```
 
 Una vez que tenemos "datos" como estos, podemos ver las frecuencias relativas y compararlas con la distribución teórica usando la función `dpois`.
-```{r, fig.width = 4, fig.height = 4, fig.cap=paste("Distribución empírica y teórica para Poisson con $\\lambda =$", lambda)}
+```{r, fig.width = 4, fig.height = 4, htmlcap=paste("Distribución empírica y teórica para Poisson con $\\lambda =$", lambda), dev='svg'}
 
 f <- factor(y,levels=0:max(y))
 obsprobs <- table(f)/n
@@ -86,7 +92,7 @@ dpois(3,lambda=lambda)
 ```
 
 El equivalente empírico de la función acumulada es la funciónn `ecdf`:
-```{r, fig.width = 4, fig.height = 4, fig.cap=paste("Acumulada empírica y teórica para Poisson con $\\lambda =$", lambda)}
+```{r, fig.width = 4, fig.height = 4, fig.cap=paste("Acumulada empírica y teórica para Poisson con $\\lambda =$", lambda), dev='svg'}
 eF <- ecdf(y)
 plot(eF, xlab="Valores", ylab="Función de Probabilidad Empírica", main="")
 lines( 0:6, ppois(0:6, lambda=1), type="s", col=2)
@@ -104,24 +110,24 @@ qpois(c(0.025,0.975) , lambda)
 quantile(y,  probs = c(0.025,0.975))
 ```
 
-## Ejercicios:
+### Ejercicios:
 
 1. Asumiendo una distribución de Poisson:
-  + ¿cuál es la probabilidad teórica de obtener $y=0$ para $\lambda = 1$?
-  + ¿cuál es la probabilidad teórica de $y > 2$ para $\lambda = 1$?
-  + comparar la probabilidad de $y=0$ para $\lambda = 1$ de la distribución teórica con la obtenida empíricamente con muestras de $10$, $100$, $1000$ y $10000$ observaciones
-  + comparar las diferencias entre el valor esperado de $y$ para la distribución teórica con los valores empíricos de muestras de $10$, $100$, $1000$ y $10000$  observaciones
-  + lo mismo para los intervalos de 95%
+  + ¿Cuál es la probabilidad teórica de obtener $y=0$ para $\lambda = 1$?
+  + ¿Cuál es la probabilidad teórica de $y > 2$ para $\lambda = 1$?
+  + Comparar la probabilidad de $y=0$ para $\lambda = 1$ de la distribución teórica con la obtenida empíricamente con muestras de $10$, $100$, $1000$ y $10000$ observaciones
+  + Comparar las diferencias entre el valor esperado de $y$ para la distribución teórica con los valores empíricos de muestras de $10$, $100$, $1000$ y $10000$  observaciones
+  + Lo mismo para los intervalos de 95%
 
-2. ¿cómo cambia la forma de la distribución de Poisson a medida que cambia $\lambda$? (pueden ver esto simulando datos y haciendo histogramas o graficando las probabilidades teóricas)
+2. ¿Cómo cambia la forma de la distribución de Poisson a medida que cambia $\lambda$? (pueden ver esto simulando datos y haciendo histogramas o graficando las probabilidades teóricas)
 
 ----------------
 
-# Distribuciones contínuas
+## Distribuciones contínuas
 
 Podemos hacer algo parecido a lo que hicimos con la distribución de Poisson para el arquetipo de las distribuciones contínuas:
 
-```{r, fig.width = 4, fig.height = 4, fig.cap = paste("Histograma de datos simulados, densidad empírica (en negro) y teórica (en rojo) de una distribución Normal con $\\mu=$", mu, "y $\\sigma=$", sigma)}
+```{r, fig.width = 4, fig.height = 4, fig.cap = paste("Histograma de datos simulados, densidad empírica (en negro) y teórica (en rojo) de una distribución Normal con $\\mu=$", mu, "y $\\sigma=$", sigma), dev='svg'}
 
 set.seed(1234)
 n <- 1000
@@ -152,14 +158,14 @@ Y el intervalo de $95$ porciento?
 qnorm(c(0.025, 0.975), mean = mu, sd = sigma)
 ```
 
-## Ejercicios: 
+### Ejercicios: 
 1. Estimar las mismas cantidades usando estimaciones empíricas.
 2. ¿Cómo cambia la forma de la distribución cuando cambia $\sigma$?
 3. Otras distribuciones. Ver otras distribuciones del [bestiario](https://sites.google.com/site/modelosydatos/Bestiario_sp.pdf) para familiarizarse con las formas que éstas pueden tener y el tipo de datos que pueden llegar a representar.
 
 ----------------
 
-# Bootstrap 
+## Bootstrap 
 
 **Objetivo**: Revisar los conceptos básicos de remuestreo de datos
 
@@ -187,13 +193,13 @@ ci
 ```
 
 
-## Ejemplo: Poner a prueba un "Correlated Random Walk"
+### Ejemplo: Poner a prueba un "Correlated Random Walk"
 
 Cargamos datos de localizaciones de elk reintroducidos y graficamos trayectorias de movimiento y el desplazamiento cuadrado
 
-```{r, fig.width = 8, fig.height = 4, fig.cap="trayectoria y desplazamiento cuadrado"}
-setwd("~/Dropbox/ME")
-elk <- read.table("elkGPS1.txt", header = T)
+```{r, fig.width = 8.5, fig.height = 5, fig.cap="trayectoria y desplazamiento cuadrado", dev='svg'}
+
+elk <- read.table("https://sites.google.com/site/modelosydatos/elkGPS1.txt", header = T)
 op<-par(mfrow=c(1,2))
 plot(elk$Easting, elk$Northing, type="o", asp=1, xlab="easting", ylab="northing")
 R2 <- (elk$Easting/1000 - elk$Easting[1]/1000)^2 + (elk$Northing/1000 - elk$Northing[1]/1000)^2
@@ -203,7 +209,7 @@ par(op)
 
 ¿Les parece que esto podría haber sido generado por un CRW? Para responder a esta pregunta, vamos a obtener los percentiles de R2 bajo el supuesto de que la trayectoria se genera con un CRW
 
-```{r, fig.width = 6, fig.height = 4, fig.cap="Desplazamiento cuadrado observado (línea con puntos) y simulado (líneas grises). Las líneas sólidas marcan los percentiles de 95%."}
+```{r, fig.width = 6, fig.height = 5, fig.cap="Desplazamiento cuadrado observado (línea con puntos) y simulado (líneas grises). Las líneas sólidas marcan los percentiles de 95%.", dev='svg'}
 # definimos los "pasos" y "giros" que ya están calculados en el set de datos
 steps <- elk$km_day
 turns <- elk$turns
@@ -211,7 +217,7 @@ sts <- steps[2:(length(steps)-1)]  #elimino el primer y ultimo dato que son NA´
 trns <- turns[2:(length(steps)-1)] #elimino el primer y ultimo dato que son NA´s
 
 # simulamos una cantidad de CRWs
-B <- 1000                                 
+B <- 500                                 
 nobs <- length(sts)
 R2B <- matrix(NA,B,nobs)                  
 
@@ -242,3 +248,7 @@ lines(per[,1], lwd=2)
 lines(per[,2], lwd=2)
 lines(R2, type="o", pch=16)
 ```
+
+---------------------------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/) . 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`

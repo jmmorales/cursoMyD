@@ -13,7 +13,7 @@
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.align='left')
+knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
 ```
 
 
@@ -378,11 +378,11 @@ lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
 par(op) 
 ```
 
-\newpage
 
 ```{r}
 sessionInfo()
 ```
 
-
+author: [Juan Manuel Morales](https://sites.google.com/site/pajarom/)
+date: `r Sys.Date()`
 
