@@ -4,167 +4,118 @@ author: "jmm"
 date: "September 10, 2015"
 output: html_document
 ---
-#------------------------------------------------------------------------------#
-#                        Maximum Likelihood Estimation                         #
 
-# Datos de remoción de frutos en bosque continuo y fragmentos en 3 sitios pareados colectados por Mariano Rodriguez-Cabal
-http://modelosydatos.googlepages.com/Rodriguez-Cabal_07.pdf
+# Análisis Bayesiano
 
-# leer los datos
+Los análisis Bayesianos son similares a los que vimos en [máxima verosimilitud](http://rpubs.com/pajaro/mle) en el sentido que dependen explícitamente de modelos probabilísticos. Pero la gran diferencia es que con Bayes, usamos las reglas de probabilidades para llegar a distribuciones de probabilidades para todas las cantidades no observadas, incluyendo parámetros, valores perdidos o nuevas observaciones. De esta manera, los análisis Bayesianos nos permiten **cuantificar incertidumbre**. 
+
+Como veremos más adelante, los análisis Bayesianos combinados con métodos numéricos permiten analizar modelos con muchos parámetros y niveles de variabilidad pero primero vamos a empezar por casos simples donde podemos calcular las posteriores directamente. 
+
+En algunos casos es posible obtener expresiones a
+
+
+# leer datos
 quintral <- read.table("http://modelosydatos.googlepages.com/quintral.txt", header = T)
 
-# Mirar los datos 
-quintral
-View(quintral) #otra manera de ver los datos como hoja de cálculo.
-str(quintral)  #para ver la estructura de los datos, qué variables hay y que tipo de variables son.  
-
-# para que las variables estén disponibles (los puristas de R objetarían...) 
+# Son datos de remociÛn de frutos de sitios pareados con bosque continuo y fragmentado 
+View(quintral)
 attach(quintral)
 
-# log likelihood para una sola observación (la primera del set de datos) asumiendo una probabilidad de remoción de p = 0.5
-dbinom(Removidos[1],size=Frutos[1],prob=.5,log=TRUE)
+# Asumimos una distribucion Binomial para los datos, y podemos usar su previa conjudada que es la distribuciÛn Beta
 
-# para un rango de valores 
-op<-par(mfrow=c(1,2),lwd=2, las=1, bty="l")     # son parametros de graficos
-theta <- seq(0,1,length=1000)                   # creo un vector de mil valores entre 0 y 1
-plot(theta,dbinom(Removidos[1],size=Frutos[1],prob=theta,log=F), type = "l", ylab="L")    # grafico del log likelihood para distintas probabilidades
-plot(theta,-dbinom(Removidos[1],size=Frutos[1],prob=theta,log=T), type = "l", ylab="-logL") # grafico del -log likelihood para distintas probabilidades
+# Par·metros previos 
+alpha = 1;
+beta = 1;
+# Estas previas corresponden a una distribuciÛn uniforme entre 0 y 1, por lo tanto es una previa "no informativa" Û "vague" 
+
+#graficamos la previa
+x = seq(from = 0, to = 1, by = 0.01) 
+plot(x, dbeta(x, alpha,beta), type = "l", xlab = expression(paste("value of ", theta)), ylab = "Probability Density")
+
+# para una sola observaciÛn: 
+pos_theta1 = dbeta(x, alpha + sum(Removidos[1]) , beta + sum((Frutos[1]-Removidos[1])))
+
+# Dado que la Beta es la conjugada de la Binomial, la posterior es otra Beta, con los par·metros actualizados con los datos. 
+
+#En este caso la nueva "alpha" es igual al alpha previo m·s el n˙mero total de "Èxitos" en los datos (Binomial) mientras que "beta" es igual al beta previo m·s el n˙mero total de "fracasos" en los datos
+
+plot(x,pos_theta1, type = "l",lwd=2,col="gray", xlab = expression(paste("value of ", theta)), ylab = "Probability Density")
+lines(x, dbeta(x,alpha,beta))
+lines(c(Removidos[1]/Frutos[1],Removidos[1]/Frutos[1]),c(0,6))
+text(0.75,5,"posterior",col="darkgray",adj=0)
+text(0.55,5.5, "data")
+text(0.1,1.5,"prior")
+
+# øQuÈ pasa si incluimos m·s observaciones?
+plot(x,dbeta(x, alpha + sum(Removidos[1:10]) , beta + sum((Frutos[1:10]-Removidos[1:10]))), type = "l", xlab = expression(paste("value of ", theta)), lwd=2,col="gray", ylab = "Probability Density")
+lines(x, dbeta(x,alpha,beta))
+text(0.75,15,"posterior",col="darkgray",adj=0)
+text(0.1,2.5,"prior")
+
+# Ahora con todos los datos
+pos_theta1 = dbeta(x, alpha + sum(Removidos) , beta + sum((Frutos-Removidos)))
+
+plot(x,pos_theta1, type="l", xlab = expression(paste("value of ", theta)), lwd=2,col="gray", ylab = "Probability Density")
+lines(x, dbeta(x,alpha,beta))
+text(0.65,35,"posterior",col="darkgray",adj=0)
+text(0.1,5,"prior")
+
+# Podemos usar pbeta, qbeta para responder preguntas acerca de la posterior 
+# "tcredint" en el paquete emdbook de Bolker calcula los intervalos de credibilidad 
+
+# La probabilidad de que la remociÛn de frutos sea <= 0.5 es
+pbeta(0.5, alpha+sum(Removidos),beta+sum((Frutos-Removidos)))
+
+# El intervalo del 95% para la probabilidad de remociÛn de frutos es 
+qbeta(c(0.025,0.975),alpha+sum(Removidos),beta+sum((Frutos-Removidos)))
+
+library(emdbook)   #para hacer el intervalo de credibilidad con la funcion tcredint()
+tcredint("beta",list(shape1= alpha+sum(Removidos), shape2 = beta+sum((Frutos-Removidos))),verbose=T)
+# El intervalo de credibilidad del 95% es apenas diferente:
+
+
+####################################################
+
+# Las observaciones vienen de sitios diferentes 
+
+x = seq(from = 0, to = 1, by = 0.0001)
+plot(x,dbeta(x,alpha+sum(Removidos),beta+sum(Frutos-Removidos)), type = "l", lwd=2,col="darkgrey", xlab = expression(paste("Fruit Removal Probability ", (theta) ),ylab = "Posterior", xlim=c(0.3,0.9), ylim=c(0,45)))
+co = which(bosque=="c")  #bosque continuo
+fr = which(bosque=="f")  #bosque fragmentado
+lines(x,dbeta(x,alpha + sum(Removidos[co]), beta+sum((Frutos[co]-Removidos[co]))),lwd=2)
+lines(x,dbeta(x,alpha + sum(Removidos[fr]), beta+sum((Frutos[fr]-Removidos[fr]))),lwd=2)
+text(0.4,30,"fragments")
+text(0.8,38,"continuous forest")
+text(0.6,45,"all")
+
+# Discriminamos por sitio y fragmentos de bosque. Hay fragmentos y bosque continuo en varios sitios diferentes
+x = seq(from = 0, to = 1, by = 0.0001)
+
+op=par(lwd=2, cex.lab=1.3)
+plot(x,dbeta(x,alpha+sum(Removidos),beta+sum(Frutos-Removidos)), type = "l",col="darkgrey", xlab = expression(paste("Fruit Removal Probability ", (theta))),ylab = "Posterior Probability Density", xlim=c(0.2,0.9), ylim=c(0,45))
+coc = which(bosque=="c" & sitio == "Campanario")
+cot = which(bosque=="c" & sitio == "Tacul")
+coll = which(bosque=="c" & sitio == "Llao-Llao")
+frc = which(bosque=="f" & sitio == "Campanario")
+frt = which(bosque=="f" & sitio == "Tacul")
+frll = which(bosque=="f" & sitio == "Llao-Llao")
+
+lines(x,dbeta(x,alpha + sum(Removidos[coc]), beta+sum((Frutos[coc]-Removidos[coc]))), col="blue")
+lines(x,dbeta(x,alpha + sum(Removidos[cot]), beta+sum((Frutos[cot]-Removidos[cot]))), col="red")
+lines(x,dbeta(x,alpha + sum(Removidos[coll]), beta+sum((Frutos[coll]-Removidos[coll]))), col = "magenta")
+lines(x,dbeta(x,alpha + sum(Removidos[frc]), beta+sum((Frutos[frc]-Removidos[frc]))), col="blue")
+lines(x,dbeta(x,alpha + sum(Removidos[frt]), beta+sum((Frutos[frt]-Removidos[frt]))), col="red")
+lines(x,dbeta(x,alpha + sum(Removidos[frll]), beta+sum((Frutos[frll]-Removidos[frll]))),col="magenta")
+
+text(0.4,25,"Fragments", cex=1.2)
+text(0.8,28,"Continuos Forests", cex=1.2)
+text(0.6,45,"Pooled Data", cex=1.2)
+legend(0.27,40,c("Campanario", "Tacul", "Llao Llao"), lty = c(1,1,1), lwd = c(2,2,2), col=c("blue","red","magenta"), cex=1.2)
+#text(0.27,40,"Campanario",col="blue")
+#text(0.27,38,"Tacul",col="red")
+#text(0.27,36,"Llao Llao", col="magenta")
 par(op)
 
-# Todas las observaciones con probabilidad de remoción p = 0.5
--sum(dbinom(Removidos,size=Frutos,prob=.5,log=TRUE))   #la suma del likelihood de todas las observaciones 
-
-# podemos ver que pasa para un rango de valores de p:
-p <- seq(0, 1, length=11) # vector de 11 valores que van de 0 a 1
-nLL <- array(0,length(p)) # vector de 11 valores iguales a 0
-for (i in 1:length(p)) {
-   nLL[i] <- -sum(dbinom(Removidos,size=Frutos,prob=p[i],log=TRUE))
-}
-# graficamos
-plot(p,nLL,type="o")
-
-# Probando con una mejor resolución 
-p <- seq(0, 1, length=1000) # vector de 1000 valores que van de 0 a 1
-nLL <- array(0,length(p))
-for (i in 1:length(p)) {
-   nLL[i] <- -sum(dbinom(Removidos,size=Frutos,prob=p[i],log=TRUE))
-}
-
-# graficamos...
-plot(p,nLL,type="l",lwd = 2, ylim = c(200,2000),ylab="Negative Log-Likelihood", xlab="Fruit Removal Probability (p)")
-
-# Veamos cómo cambia el Likelihood con el número de observaciones
-op<-par(mfrow=c(2,3),lwd=2, las=1, bty="l")
-theta <- seq(0,1,length=1000)
-plot(theta,dbinom(Removidos[1],size=Frutos[1],prob=theta,log=F), type = "l", ylab="L", main="n = 1")
-
-nLL2 <- array(0,length(theta))
-for (i in 1:length(theta)) {
-   nLL2[i] <- -sum(dbinom(Removidos[1:2],size=Frutos[1:2],prob=theta[i],log=TRUE))
-}
-plot(theta,exp(-nLL2), type = "l", ylab="L", main="n=2")
-
-nLL10 <- array(0,length(theta))
-for (i in 1:length(theta)) {
-   nLL10[i] <- -sum(dbinom(Removidos[1:10],size=Frutos[1:10],prob=theta[i],log=TRUE))
-}
-plot(theta,exp(-nLL10), type = "l", ylab = "L", main="n=10")
-plot(theta,-dbinom(Removidos[1],size=Frutos[1],prob=theta,log=T), type = "l", ylab="-logL", main="n=1")
-plot(theta,-dbinom(Removidos[1],size=Frutos[1],prob=theta,log=T), type = "l", ylab="-logL", main="n=2")
-lines(theta,nLL2, type = "l", lty=5)
-plot(theta,-dbinom(Removidos[1],size=Frutos[1],prob=theta,log=T), type = "l", ylab="-logL", main="n=10")
-lines(theta,nLL10, type = "l", lty=5)
-par(op)
 #-------------------------------------------------------------------------------
+# Calcular los intervalos de credibilidad para la remociÛn de frutos en todos los sitios y fragmentos 
 
-# Para encontrar el valor de p que maximiza el likelihood
-p[which(nLL==min(nLL))]
-
-# ¿Como comparar este valor con una estimación más directa? 
-sum(Removidos)/sum(Frutos)
-
-# maximum log-likelihood
--min(nLL)
-
-# maximum likelihood
-exp(-min(nLL))
-
-################################################################################
-#        Búsquedas más eficientes usando "optim" y "mle2" de Bolker            #
-
-# Primero tenemos que definir una función para nuestro negative log likelihood
-
-binomNLL1 <- function(p,k,N){
-  -sum(dbinom(k, prob = p, size =N, log = TRUE))      #k son los removidos, N= los frutos
-}
-
-# Ahora usamos "optim" especificando los parámetros iniciales, los datos y el método de búsqueda
-O1 <- optim(fn = binomNLL1, par = c(p = 0.5), N = Frutos, k = Removidos, method = "BFGS")
-# Hay algunos "warnings" de NAs producidos en dbinom pero nada de qué preocuparse
-
-# Veamos qué paso
-O1
-
-# O1 guardó: 
-# en $par, el valor óptimo del parámetro  
-# en $value, el valor del log likelihood para $par 
-# en $counts, hay algunas cosas crípticas acerca de cómo se desarrolló la búsqueda 
-# Hay que asegurarse de que el algoritmo haya convergido ( $convergence = 0 )
-
-#------------
-
-# "optim" en R es una función general de optimización, pero para MLE podemos usar mle2 desarrollado por Ben Bolker
-
-library(bbmle) # cargar el paquete de MLE 
-# Chequear
-?mle2
-
-m1 <- mle2(minuslogl = binomNLL1, start = list(p = 0.5), data = list(N = Frutos, k = Removidos))
-# en mle2 la función de negative log likelihood se llama "minuslogl" en vez de "fn" (en optim)
-
-# Comparemos m1 con O1
-m1
-# Devuelve la función usada, valores de los coeficientes y el log likelihood
-
-# Podemos ver más detalles con: 
-summary(m1)
-
-# Ahora tenemos errores standares y valores de p para los coeficientes y la devianza (-2 log likelihood)
-# Después veremos como usar éstas y otras salidas de mle2 para obtener intervalos de confianza y hacer comparaciones entre modelos 
-
-###################################
-
-# Comparación (cruda) con los datos
-k <- Removidos
-hist(k, breaks = 40, freq=F, ylim = c(0,0.15))
-points(0:50,dbinom(0:50,size=35,prob=m1@coef),pch=16,col="darkgray")
-
-# Sin embargo, el número de frutos disponibles es variable y para una mejor comparación podemos usar un bootstrap (remuestreo)
-res <- matrix(0,length(Frutos),1000)
-for (i in 1:1000){
-n <- sample(Frutos,length(Frutos),replace=TRUE)
-res[,i] <- rbinom(length(Frutos),n,m1@coef)}
-hist(k, breaks = 40, freq=F, ylim = c(0,0.15))
-lines(density(res))
-
-# Una exageración...
- hist(k, breaks = 40, freq=F, ylim = c(0,0.15))
- for(i in 1:1000){lines(density(res[,i]))}
- 
-# ¿Qué puede decir sobre el ajuste del modelo a los datos?
-# ¿Cómo cambia la remoción de frutos por sitio y tipo de bosque?
-
-
-########### Algunos trucos de R 
-# Podemos evitar muchos loops usando "apply"
-
-# Primero defina una función de p
-binom.nll <- function(p, x = Removidos,size = Frutos){
- -sum(dbinom(x,size,prob=p,log=TRUE))}
-
-# Ahora aplicamos la función a un vector (por lo tanto "sapply") de valores de probabilidad p
-p <- seq(0, 1, length=100)
-nLL <- sapply(p, binom.nll)
-###########
-#Otro atajo: para funciones estándar se puede escribir directamente la función en mle2
-m2 <- mle2(k~dbinom(prob=p, size=Frutos), start=list(p=0.5))
