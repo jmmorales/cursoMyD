@@ -2,7 +2,7 @@
 output:
   knitrBootstrap::bootstrap_document:
     title: "intro"
-    theme: cerulean
+    theme: cosmo
     highlight: Solarized - Light
     theme.chooser: TRUE
     highlight.chooser: TRUE
@@ -13,19 +13,19 @@ output:
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.align='left')
+knitr::opts_chunk$set(tidy=TRUE, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
 ```
-
 
 # R de reproducibilidad
 
 Hoy en día, los científicos deben estar capacitados para "sacarle el jugo" a distintas fuentes de información. Parte del trabajo consiste en procesar bases de datos, resumir, graficar, y ajustar modelos a datos. Trabajar con herramientas tipo Excel no solo es limitante (y poco elegante) sino que además atenta contra la "reproducibilidad" de la investigación ya que normalmente no nos queda una documentación detallada de cómo se llega a un resultado o un gráfico en particular (hay mucho movimiento y "click" de mouse de por medio). La reproducibilidad es (o debería ser) un estándar mínimo para el trabajo científico. Si bien, el hecho de que algo sea reproducible no quiere decir que sea correcto, al menos lo hace más fácil de evaluar, de revisar y de re-utilizar. Un paso importante para lograr la reproducibilidad es hacer todo con instrucciones escritas (*scripts*) en lugar de con el mouse.
 
-En resumen, para trabajar en ciencia hay que saber un mínimo de programación. Si tenemos que elegir en qué lenguaje programar, `R` o `Python` parecen las mejores opciones a la fecha, pero `R` es actualmente el más popular entre los ecólogos y es el que vamos a usar en este curso. `R` es una implementación de dominio público del lenguaje estadístico `S` que ha ganado popularidad por varios motivos. Se puede descargar de https://cran.r-project.org/ y funciona en PC, Mac y Linux. Además de usarse para análisis estadísticos, con `R` se puede programar casi cualquier cosa. Tiene programación basada en objetos y programación funcional. La comunidad de usuarios de `R` es cada vez mayor y en general es relativamente fácil encontrar ayuda.
+En resumen, para trabajar en ciencia hay que saber un mínimo de programación. Si tenemos que elegir en qué lenguaje programar, `R` o `Python` parecen las mejores opciones a la fecha, pero `R` es actualmente el más popular entre los ecólogos y es el que vamos a usar en este curso. `R` es una implementación de dominio público del lenguaje estadístico `S` que ha ganado popularidad por varios motivos. Se puede descargar de [cran](https://cran.r-project.org/) y funciona en PC, Mac y Linux. Además de usarse para análisis estadísticos, con `R` se puede programar casi cualquier cosa. Tiene programación basada en objetos y programación funcional. La comunidad de usuarios de `R` es cada vez mayor y en general es relativamente fácil encontrar ayuda.
 
 `R` se distribuye con una interfase gráfica rudimentaria, pero hay varios motivos para trabajar con `R` através de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y para la creación de documentos (como éste que fue escrito en RStudio) que incluyen código de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles através de RStudio podremos trabajar mejor y de manera más eficiente. Al principio no parece, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigación sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
 
 ![walter](http://ztoe.net/wp-content/uploads/2008/11/lebowski.jpg)
+----------------
 
 ## Cosas Básicas de `R`
 
@@ -119,7 +119,7 @@ Para no repetir las cuentas año por año podemos hacer un "bucle" (*for loop*) 
 tasa <- numeric(length(n) - 1)
 ```
 Aquí combinamos dos funciones de `R`: `numeric` y `length`. Para ver qué hace `numeric` podemos hacer `?numeric`. 
-Poniendo un signo de pregunta y luego el nombre de una función de `R` accedemos a la documentación de esa función (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso información acerca de funciones que no conocemos es visitando http://rseek.org/ .
+Poniendo un signo de pregunta y luego el nombre de una función de `R` accedemos a la documentación de esa función (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso información acerca de funciones que no conocemos es visitando [RSeek](http://rseek.org/).
 
 Volviendo a nuestro *loop*, lo que queremos es repetir una operación (o varias) e ir guardando los resultados:
 ```{r}
@@ -148,10 +148,10 @@ Para graficar la tasa de incremento en cada año podemos usar
 plot(yr[2:length(n)], tasa)
 ```
 
-Para "embellecer" un poco el gráfico podemos usar `main`, `xlab`, y `pch`
+Para "embellecer" un poco el gráfico podemos usar `main`, `xlab`, `pch` y `cex.lab`
 
 ```{r}
-plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="año", pch=16)
+plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="año", pch=16, cex.lab = 1.5)
 ```
 
 Ahora que aprendimos a usar un *for loop*, podemos ver que en este caso no lo necesitábamos! De hecho, una muy buena característica de `R` es que permite hacer operaciones sobre vectores, listas, etc. como veremos oportunamente. De todas formas, es importante aprender a manejar los *loops* ya que son una herramienta básica de programación.
@@ -251,7 +251,7 @@ n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
 ```
 -------------------------------------------------------------------
 
-# Ejercicio:
+## Ejercicio:
 
  Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a n)$. 
  Escribir una función para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logístico.
