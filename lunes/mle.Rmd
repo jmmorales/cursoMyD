@@ -1,11 +1,11 @@
 ---
+output:
   knitrBootstrap::bootstrap_document:
     title: "mle"
-    theme: yeti
-    highlight: HighlightJS
-    theme.chooser: FALSE
-    highlight.chooser: FALSE
-    dev: svg
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
     
 ---
 
@@ -13,7 +13,7 @@
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(tidy=TRUE, fig.width=5, fig.height=4, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+knitr::opts_chunk$set(tidy=TRUE, fig.width=8, fig.height=6, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
 ```
 
 
@@ -33,7 +33,7 @@ $$
 p(y)= \prod_i^n{ \frac{\lambda^{y_i} \exp(- \lambda)} {y_i!} }
 $$
 
-Podemos ver que el producto ($\prod$) se hace usándo $i$ como índice para cada observación del set de datos $y$,  desde $i=1$ hasta $i=n$ que es el tamaño de $y$. Esta probabilidad de observar los datos es lo que llamamos *likelihood* o *verosimilitud*. Para hacer la cuenta de arriba tenemos que definir además el parámetro $\lambda$. La probabilidad de los datos depende entonces no sólo de los valores presentes en el set de datos sino también de la distribución utilizada y el valor del o los parámetros de la distribución. De manera más general, la expresión es un **modelo de datos**, es decir una descripción probabilística de como llegar a los datos. Más adelante veremos como combinando procesos determinísticos y estocásticos podemos armar modelos de datos realistas y satisfactorios.
+Podemos ver que el producto ($\prod$) se calcula usándo $i$ como índice para cada observación del set de datos $y$,  desde $i=1$ hasta $i=n$ que es el tamaño de $y$. Esta probabilidad de observar los datos es lo que llamamos *likelihood* o *verosimilitud*. Para hacer la cuenta de arriba tenemos que definir además el parámetro $\lambda$. La probabilidad de los datos depende entonces no sólo de los valores presentes en el set de datos sino también de la distribución utilizada y el valor del o los parámetros de la distribución. De manera más general, la expresión es un **modelo de datos**, es decir una descripción probabilística de como llegar a los datos. Más adelante veremos como combinando procesos determinísticos y estocásticos podemos armar modelos de datos realistas y satisfactorios.
 
 Veamos ahora como calcular la probabilidad de estos datos en `R` asumiendo $\lambda = 1$:
 
@@ -45,7 +45,7 @@ p.y
 prod(p.y)
 ```
 
-Como las probabilidades son números que van entre $0$ y $1$, el producto de varias probabilidades resulta en números muy pequeños. Vemos en este caso que la probabilidad del **conjunto** de datos es muy baja (`5.67e-06`,  donde `e-06` es $10^{-6}$ o $0.000001$) pero esto no debería sorprendernos porque esa es la probabilidad de encontrar exactamente esos datos. Entonces, para evitar problemas numéricos preferimos trabajar con la suma de los logaritmos de las probabilidades, es decir con el logaritmo del *likelihood*. En `R`, podemos usar la opción `log = TRUE` dentro de las funciones de densidad.  
+Como las probabilidades son números que van entre $0$ y $1$, el producto de varias probabilidades resulta en números muy pequeños. Vemos en este caso que la probabilidad del **conjunto** de datos es muy baja (`5.67e-06`,  donde `e-06` es $10^{-6}$ = $0.000001$) pero esto no debería sorprendernos porque esa es la probabilidad de encontrar exactamente esos datos. Entonces, para evitar problemas numéricos preferimos trabajar con la suma de los logaritmos de las probabilidades, es decir con el logaritmo del *likelihood*. En `R`, podemos usar la opción `log = TRUE` dentro de las funciones de densidad.  
 
 ```{r}
 y <- c(1, 0, 2, 1, 0, 0, 1, 1, 2, 2)
@@ -64,7 +64,7 @@ sum(dpois(y, lambda=lambda, log = TRUE))
 
 Con un $\lambda$ de $2$ la *log likelihood* de los datos empeora, pero podemos seguir probando distintos valores de $\lambda$ hasta encontrar el que hace más posible al set de datos. Esta es la idea detrás de los análisis de máxima verosimilitud (a falta de mejor nombre) o de *maximum likelihood* (si estamos dispuestos a usar palabras en inglés). Normalmente tenemos más de un parámetro en nuestro modelo de datos, y usamos aglún algoritmo de búsqueda para encontrar la combinación de parámetros que hace más probables a nuestros datos (por tradición, los algoritmos buscan minimizar el menos logaritmo de la verosimilitud de nuestros datos). Esta idea de buscar combinaciones de parámetros que maximizan la verosimilitud de los datos se conoce como *maximum likelihood estimation* y muchas veces aparece abreviado como MLE.
 
-## Ejemplo: Remoción de Frutos
+### Ejemplo: Remoción de Frutos
 
 [Mariano Rodriguez-Cabal](https://sites.google.com/site/rodriguezcabal/home) estudió la remoción de frutos de quintral por parte del monito del monte en bosque continuo y fragmentos en 3 sitios pareados con la idea de ver si la fragmentación afectabla la interacción entre este marsupial y el muérdago. El trabajo  está dispoible [aquí](http://sites.google.com/site/modelosydatos/Rodriguez-Cabal_07.pdf)
  
@@ -79,7 +79,7 @@ Para ver como están organizados los datos podemos hacer:
 ```{r}
 str(quintral)  
 ```
-Vemos que se trata de un *data frame* que es la manera preferida de `R` para organizar datos. Los data frames tienen a las observaciones en filas y a las variables en columnas. Las variables individuales se pueden acceder escribiendo el nombre del data frame seguido del signo $ y el nombre de la variable. Por ejemplo, si queremos ver los valores de frutos disponibles en las tres primeras observaciones hacemos:
+Vemos que se trata de un *data frame* que es la manera preferida de `R` para organizar datos. Los data frames tienen las observaciones en filas y las variables en columnas. Las variables individuales se pueden acceder escribiendo el nombre del data frame seguido del signo $ y el nombre de la variable. Por ejemplo, si queremos ver los valores de frutos disponibles en las tres primeras observaciones hacemos:
 
 ```{r}
 quintral$Frutos[1:3]
@@ -137,7 +137,9 @@ plot(theta, nLL10, type = "l", xlab="", ylab="", main="", ylim=c(0,100))
 par(op)
 ```
 
-# Buscando el máximo (o más bien el mínimo...)
+-----------
+
+## Buscando el máximo (o más bien el mínimo...)
 
 Queremos encontrar el valor de probabilidad de remoción por fruto que maximiza el likelihood (o minimiza el *negative log-likelihood*) del conjunto de datos. Una opción es hacerlo a lo bruto:
   
@@ -159,9 +161,9 @@ sum(quintral$Removidos)/sum(quintral$Frutos)
 
 ¿Qué pasa si cambiamos la resolución en el vector de probabilidades de remoción (cambiando `length = 50`)?
 
-## Búsquedas más eficientes usando "optim" y "mle2" de [Ben Bolker](http://ms.mcmaster.ca/~bolker/)
+### Búsquedas más eficientes usando "optim" y "mle2" de [Ben Bolker](http://ms.mcmaster.ca/~bolker/)
 
-Claramente no podemos recurrir a búsquedas gráficas o de fuerza bruta cuando tenemos modelos con varios parámetros. Entonces, tenemos que hacer uso de los algorítmos de búsqueda que están disponibles en `R` con la función `optim`. Primero tenemos que definir una función para "optimizar" que para `optim` viene a ser encontrar el mínimo. Además, tenemos que definir por dónde empezar a buscar y con qué método.
+Claramente no podemos recurrir a búsquedas gráficas o de fuerza bruta cuando tenemos modelos con varios parámetros. Entonces, tenemos que hacer uso de los algoritmos de búsqueda que están disponibles en `R` con la función `optim`. Primero tenemos que definir una función para "optimizar" que para `optim` viene a ser encontrar el mínimo. Además, tenemos que definir por dónde empezar a buscar y con qué método.
 
 ```{r}
 binomNLL1 <- function(p,k,N){
@@ -196,7 +198,7 @@ summary(m1)
 
 Ahora tenemos errores standares y valores de 'p' para los coeficientes (poniendo a prueba la hipótesis nula de que el coeficiente es igual a cero). También aparece la devianza (-2 log-likelihood). Más adelante veremos como usar éstas y otras salidas de `mle2` para obtener intervalos de confianza y hacer comparaciones entre modelos. 
 
-## Comparación (cruda) con los datos
+### Comparación (cruda) con los datos
 
 Una vez que ajustamos el modelo es natural preguntarse qué tan bueno es el modelo para representar el proceso ecológico que nos interesa. Una forma rústica pero efectiva para hacer esta evaluación es graficar la distibución de valores observados con los predichos por el modelo:
 
@@ -207,7 +209,7 @@ points(0:50,dbinom(0:50,size=round(mean(quintral$Frutos)),prob=m1@coef),
        pch=16,col="darkgray")
 ```
 
-Un probalema de la comparación que acabamos de hacer es que el número de frutos disponibles es variable. Para hacer una mejor comparación podemos usar un bootstrap (remuestreo)
+Una limitación de la comparación que acabamos de hacer es que el número de frutos disponibles es variable. Para hacer una mejor comparación podemos usar un bootstrap (remuestreo)
 
 ```{r}
 nboot <- 1000
@@ -228,17 +230,16 @@ abline(h=0, lwd=2, lty=2)
 ```
 
 
-
 ¿Qué se puede decir sobre el ajuste del modelo a los datos?
 
-## Ejercicio
+### Ejercicio
 1. Estimar las probabilidades de remoción de frutos por sitio y tipo de bosque.
 
--------------------------
+-------
 
 ## Ejemplo: Deposición de polen en flores de pomelo 
 
-[Natacha Chacoff](https://scholar.google.com/citations?user=rxJBqGcAAAAJ&hl=en) estudió la deposición depolen en flores de pomelo en función del número de visitas de abejas. El trabajo terminado se puede ver [aquí](https://sites.google.com/site/modelosydatos/Chacoff_2008.pdf) 
+[Natacha Chacoff](https://scholar.google.com/citations?user=rxJBqGcAAAAJ&hl=en) estudió la deposición de polen en flores de pomelo en función del número de visitas de abejas. El trabajo terminado se puede ver [aquí](https://sites.google.com/site/modelosydatos/Chacoff_2008.pdf) 
 
 
 ```{r}
@@ -305,84 +306,14 @@ lines(x, mSAT@coef[1] + mSAT@coef[2]*(1-exp(-mSAT@coef[3]* x)), lwd=2, col=2)
 ¿Cómo ajustan estos modelos a los datos?
 ¿Qué otros modelos podríamos probar? 
 
-# Aves carroñeras y rutas 
-Lambertucci y colaboradores pusieron cadáveres de ovejas a distintas distancias de rutas y observaron la actividad de aves carroñeras. Estudian la detección y el uso de carroña en relación a la distancia a las rutas por cóndores y otras aves rapaces. El trabajo completo está en https://sites.google.com/site/modelosydatos/Lambertucci_09.pdf y los datos los pueden bajar de https://sites.google.com/site/pajarom/condor.txt
-
-Estos datos tienen exeso de ceros, entonces necesitamos escribir una función para la regresión binomial "inflada" en ceros. Para el total de aves observadas en cada sitio de carroña (volando y en tierra) podemos asumir una Poisson con exeso de ceros. Para la fracción de aves que bajan hasta la carroña asumimos una Binomial.
-
-Además, vamos a usar la función ```plogis``` para pasar de valores reales (positivos y negativos) a valores entre cero y uno. Para ver como funciona este truco hacemos:
-```{r}
-tmp <- seq(from=-5, to=5, by=0.01) 
-plot(tmp,plogis(tmp),type="l", lwd=2)
-```
-
-De esta forma, podemos usar covariables para la probabilidad de éxito de una binomial.
-Todo junto queda:
-
-```{r}
-condor <- read.table("https://sites.google.com/site/modelosydatos/condor.txt", header=T)
-head(condor) # revisamos los datos
-                                                     
-zibinregc = function(p) {
-  av = p[1] # probabilidad (sin transformar) de detectar la carroña
-  ad = p[2] # ordenada al origen de bajar a comer
-  bd = p[3] # la pendiente de bajar a comer 
-  an = p[4] # ordenada al origen de abundancia 
-  bn = p[5] # pendiente de la distancia a la ruta
-  
-  v = plogis(av)  #  probabilidad de detectar una carroña 
-  pr = plogis(ad + bd * condor$Dist/1000) # probabilidad de bajar a comer
-  lambda = exp(an + bn * condor$Dist/1000) # Poisson en función de la distancia a la ruta
-  nllp = -sum(log(ifelse(k+f==0,(1-v) + v*dpois(0,lambda), v*dpois(k+f,lambda))))  
-  # Poisson likelihood inflada en ceros
-  nllb = -sum(dbinom(k,k+f,prob=pr,log=T))   # likelihood Binomial
-  return(nllp+nllb) # el resultado es la suma de las dos negative log-likelihoods
-}
-
-# definir los nombres de los parámetros para que los use mle2
-parnames(zibinregc) = c("av","ad","bd","an","bn")  
-
-#Ajustamos la funcion para los cóndores
-fit.C <- mle2(minuslogl=zibinregc, start=c(av=1, ad=2, bd=0, an=2, bn=0), 
-              data=list(k=condor$Condor,f=condor$CoFl, Dist=condor$Dist))  
-
-summary(fit.C) # ver los resultados
-
-par_cof <- fit.C@coef # extraer los coeficientes (MLE de los parámetros)
-d = 0:6000   # variable para graficar distancia
-
-# gráfico de los ajustes
-op=par(mfrow=c(2,1), lwd=2)                             
-plot(condor$Dist,(condor$Condor+condor$CoFl), ylab = "# de Cóndores", 
-     xlab="Distancia a la Ruta")                                    
-lines(d,exp(par_cof[4]+par_cof[5]*d/1000))
-plot(condor$Dist, condor$Condor/(condor$Condor+condor$CoFl),
-     ylab="Proporción de Cóndores comiendo", xlab="Distancia a la Ruta")
-lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
-par(op)             
-
-# Lo mismo para Jote negro 
-fit.J <- mle2(zibinregc, start = c(av=1, ad=2, bd=0, an=2, bn=0), 
-              data = list(k=condor$JoteN,f=condor$JNFl, Dist=condor$Dist))  
-
-summary(fit.J)
-par_cof <- fit.J@coef
-
-op=par(mfrow=c(2,1), lwd=2)                             
-plot(condor$Dist,(condor[,11]+condor[,12]), ylab = "# de Jote Negro", 
-     xlab="Distancia a la Ruta")                                    
-lines(d,exp(par_cof[4]+par_cof[5]*d/1000))
-plot(condor$Dist, condor[,11]/(condor[,11]+condor[,12]),
-     ylab="Proporción de Jote Negro comiendo", xlab="Distancia a la Ruta")
-lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
-par(op) 
-```
-
+-----------
 
 ```{r}
 sessionInfo()
 ```
 
-author: [Juan Manuel Morales](https://sites.google.com/site/pajarom/)
+-----------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/)
 date: `r Sys.Date()`
 
