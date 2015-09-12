@@ -25,13 +25,14 @@ En resumen, para trabajar en ciencia hay que saber un mínimo de programación. 
 `R` se distribuye con una interfase gráfica rudimentaria, pero hay varios motivos para trabajar con `R` através de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y para la creación de documentos (como éste que fue escrito en RStudio) que incluyen código de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles através de RStudio podremos trabajar mejor y de manera más eficiente. Al principio no parece, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigación sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
 
 ![walter](http://ztoe.net/wp-content/uploads/2008/11/lebowski.jpg)
-----------------
+
+***
 
 ## Cosas Básicas de `R`
 
 `R` funciona como una calculadora:
 
-```{r, tidy=TRUE, }
+```{r}
 2 + 2
 
 2 * 3
@@ -77,6 +78,12 @@ n
 Un tipo especial de vector son las secuencias. Para generar una secuencia de valores podemos hacer por ejemplo:
 ```{r}
 yr <- 2009:2014
+```
+
+Alternativamente podemos usar la función `seq` que nos permite más flexibilidad para generar secuencias:
+```{r}
+yr <- seq(from = 2009, to = 2014, by = 1)
+yr <- seq(from = 2009, to = 2014, length = 6)
 ```
 
 Hagamos de cuenta que los vectores `n` y `yr` corresponden a censos de una especie invasora. Si queremos ver el tamaño poblacional en el año $2010$ hacemos:
@@ -148,10 +155,12 @@ Para graficar la tasa de incremento en cada año podemos usar
 plot(yr[2:length(n)], tasa)
 ```
 
-Para "embellecer" un poco el gráfico podemos usar `main`, `xlab`, `pch` y `cex.lab`
+Para "embellecer" un poco el gráfico podemos usar `main`, `xlab` y `pch`. También podemos definir algunos parámetros gráficos con la función `par`. Por ejemplo  `las` cambia la orientación de los números en los ejes, y `cex.lab` cambia el tamaño de las etiquetas. Normalmente definimos estas opciones de gráficos en un objeto (`op` abajo), hacemos los gráficos y luego revertimos las opciones a los valores originales. A lo largo de los prácticos iremos viendo distintas opciones de `par`. 
 
 ```{r}
-plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="año", pch=16, cex.lab = 1.5)
+op <- par(las=1, cex.lab=1.5, cex.axis=1.5)
+plot(yr[2:length(n)], tasa, main="Tasa de Crecimiento", xlab="año", pch=16)
+par(op)
 ```
 
 Ahora que aprendimos a usar un *for loop*, podemos ver que en este caso no lo necesitábamos! De hecho, una muy buena característica de `R` es que permite hacer operaciones sobre vectores, listas, etc. como veremos oportunamente. De todas formas, es importante aprender a manejar los *loops* ya que son una herramienta básica de programación.
@@ -170,8 +179,9 @@ n <- c(n, numeric(6))
 for(i in 7:length(n)){
   n[i] <- n[i-1] * lambda
 }
-
+op <- par(cex.lab=1.5, cex.axis=1.5)
 plot(yr,n)
+par(op)
 ```
 
 Lo mismo podríamos hacer definiendo condiciones iniciales y usando la fórmula $n(t) = n(0) \lambda^{t}$.
@@ -181,7 +191,9 @@ n0 <- 2
 tiempo <- 0:11
 nt <- n0 * lambda^tiempo
 
+op <- par(cex.lab=1.5, cex.axis=1.5)
 plot(tiempo, nt)
+par(op)
 
 ```
 
@@ -192,12 +204,15 @@ lambda <- 1.8
 N <- 0:100
 K <- 80  
 rd <- lambda - 1 
+
+op <- par(cex.lab=1.5, cex.axis=1.5, mar = c(5,6,4,2) + 0.1)
 plot(N, lambda - rd/K * N, type="l", ylab= expression(lambda(N)), ylim=c(0,3), lwd=2)
 text(K+4, 2.5, "K", cex=1.5)
-abline(h=1, lty=2, lwd=2)
+abline(h=1, lty=2, lwd=2) # abline agrega una recta al gráfico previo. Ver ?abline
 abline(v=K, lty=2, lwd=2)
+par(op)
 ```
-Donde `rd` es la tasa de crecimiento máximo de la población (cuando `N` está cerca de $0$ y `K` es la capacidad de carga de la población para el sistema de estudio.
+Donde `rd` es la tasa de crecimiento máximo de la población (cuando `N` está cerca de $0$) y `K` es la capacidad de carga de la población para el sistema de estudio.
 
 Para simular la dinámica de una población con estos parámetros podemos hacer:
 ```{r}
@@ -208,7 +223,9 @@ for(t in 1:(length(n)-1)){
   n[t+1] <- n[t] + rd*n[t]*(1 - n[t]/K)
 }
 
+op <- par(cex.lab=1.5, cex.axis=1.5)
 plot(1:length(n), n, type="l", lwd=2, xlab = "Años", ylab = "N")
+par(op)
 ```
 
 ##  Escribiendo Funciones 
@@ -249,14 +266,27 @@ K <- 100
 nyears <- 20  # no necesariamente usamos el mismo nombre
 n <- logistic(nyr=nyears, rd=rd, n0=n0, K=K)
 ```
--------------------------------------------------------------------
 
-## Ejercicio:
+***
 
- Ricker (1954), cambió la relación lineal entre $\lambda$ y $n$ por $exp(-a n)$. 
- Escribir una función para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logístico.
+## Ejercicios:
 
-*****
+1. Escriir un *loop* para calcular la suma acumulada a lo largo de un vector. Por ejemplo, la suma acumulada de un vector de 1 a 10 es `r cumsum(1:10)`.
+
+2. Escribir un *loop* doble para armar una tabla de multiplicar de 10 por 10. Pista: primero tienen que armar una matriz de 10 por 10 usando `matrix`.
+
+3. Escribir un *loop* doble para obtener una matriz como esta: 
+```{r}
+matrix(1:6, 3, 2)
+``` 
+y otro *loop* doble para obtener una matriz como esta: 
+```{r} 
+matrix(1:6, 3, 2, byrow = TRUE)
+```
+
+4. Bill Ricker (1954) cambió la relación lineal entre $\lambda$ y $n$ del modelo logístico por un decaimiento exponencial $exp(-a n)$. Escribir una función para simular trayectorias poblacionales con el modelo de Ricker y compararlo con el logístico.
+
+***
 
 ```{r}
 sessionInfo()
