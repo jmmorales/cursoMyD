@@ -275,8 +275,7 @@ poislin <- function (pars) {
 
 parnames(poislin) <- c("b0", "b1")
 
-fit.lin <- mle2(poislin, start = c(b0 = 10, b1 = 3), 
-             data = list(visitas = apis$visitas, granos = apis$granos))
+fit.lin <- mle2(poislin, start = c(b0 = 10, b1 = 3), data = list(visitas = apis$visitas, granos = apis$granos))
 
 summary(fit.lin)
 
