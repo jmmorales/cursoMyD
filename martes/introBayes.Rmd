@@ -8,6 +8,12 @@ output:
     highlight.chooser: TRUE
 ---
 
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+```
 
 # Análisis Bayesiano
 
@@ -23,7 +29,7 @@ Es decir que la probabilidad *posterior* de los parámetros **$\theta$** dado qu
 
 ## Previas Conjugadas
 
-Para algunos casos es posible resolver analícamente la ecuación de la regla de Bayes. Por ejemplo, si modelamos a la probabilidad de los datos con una Binomial y usamos a un distribución Beta para la previa de la probabilidad de éxito de la Binomial, la posterior es otra distribución Beta pero actualizada en base a las observaciones. Se dice entonces que la distribución Beta es la **conjugada** de la Binomial. Veamos un ejemplo con los datos de Quintral. Previamente vimos como calcular la probabilidad de remoción por frutos usando [MLE](http://rpubs.com/pajaro/mle). Para hacer un análisis equivalente pero bajo el enfoque Bayesiano podemos definir a la previa de la probabilidad de remoción por fruto con una distribución Beta con parámetros $\alpha$ y $\beta$ y actualizar los valores de estos parámetro en función de la cantidad de éxitos y fracasos obervados. La posterior de la probabilidad de remoción por fruto es entonces una Beta con $\alpha = \sum y$ y $\beta = \sum (n-y)$ donde $y$ representa a los frutos removidos de los $n$ disponibles. Veamos como hacer esto en `R`. 
+Para algunos casos es posible resolver analícamente la ecuación de la regla de Bayes. Por ejemplo, si modelamos a la probabilidad de los datos con una Binomial y usamos a un distribución Beta para la previa de la probabilidad de éxito de la Binomial, la posterior es otra distribución Beta pero actualizada en base a las observaciones. Se dice entonces que la distribución Beta es la **conjugada** de la Binomial. Veamos un ejemplo con los datos de Quintral. Previamente vimos como calcular la tasa de remoción por frutos usando [MLE](http://rpubs.com/pajaro/mle). Para hacer un análisis equivalente pero bajo el enfoque Bayesiano podemos definir a la previa de la tasa de remoción por fruto con una distribución Beta con parámetros $\alpha$ y $\beta$ y actualizar los valores de estos parámetro en función de la cantidad de éxitos y fracasos obervados. La posterior de la tasa de remoción por fruto es entonces una Beta con $\alpha = \sum y$ y $\beta = \sum (n-y)$ donde $y$ representa a los frutos removidos de los $n$ disponibles. Veamos como hacer esto en `R`. 
 
 Primero cargamos los datos y vemos de qué se trata (son los mismos que usamos para uno de los ejemplos de MLE)
 ```{r}
@@ -31,21 +37,21 @@ url <- "https://github.com/jmmorales/cursoMyD/raw/master/Data/quintral.txt"
 quintral <- read.table(url, header = TRUE)
 str(quintral)
 ```
-Ahora definimos la previa para la probabilidad de remoción por fruto como una Beta(1,1) que equivale a no tener observaciones previas. Vemos entonces que la previa es *chata* o *no-informativa*:
+Ahora definimos la previa para la tasa de remoción por fruto como una Beta(1,1) que equivale a no tener observaciones previas. Vemos entonces que la previa es *chata* o *no-informativa*:
 
 ```{r}
 alpha <- 1
 beta  <- 1
 
 x <- seq(from = 0, to = 1, by = 0.01) 
-plot(x, dbeta(x, alpha, beta), type = "l", xlab = "prob remoción", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
+plot(x, dbeta(x, alpha, beta), type = "l", xlab = "tasa de remoción", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
 ```
 
-Para calcular la posterior de la probabilidad de remoción por fruto considerando solamente la primera observación hacemos:
+Para calcular la posterior de la tasa de remoción por fruto considerando solamente la primera observación hacemos:
 ```{r}
 pos1 <- dbeta(x, alpha + sum(quintral$Removidos[1]) , beta + sum((quintral$Frutos[1] - quintral$Removidos[1])))
 
-plot(x, pos1, type = "l", lwd=3, col="gray", xlab =  "prob remoción", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
+plot(x, pos1, type = "l", lwd=3, col="gray", xlab =  "tasa remoción", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
 lines(x, dbeta(x, alpha, beta), lwd=3)
 abline(v = quintral$Removidos[1]/quintral$Frutos[1], lty=3, lwd=3)
 text(0.75,5,"posterior",col="darkgray",adj=0, cex = 1.5)
@@ -56,7 +62,7 @@ text(0.1,1.5, "previa", cex = 1.5)
 ¿Qué pasa si incluimos más observaciones? Por ejemplo 10:
 
 ```{r}
-plot(x, dbeta(x, alpha + sum(quintral$Removidos[1:10]) , beta + sum((quintral$Frutos[1:10] - quintral$Removidos[1:10]))), type = "l", xlab = "prob remoción", lwd=3, col="darkgray", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
+plot(x, dbeta(x, alpha + sum(quintral$Removidos[1:10]) , beta + sum((quintral$Frutos[1:10] - quintral$Removidos[1:10]))), type = "l", xlab = "tasa de remoción", lwd=3, col="darkgray", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
 lines(x, dbeta(x, alpha, beta), lwd=3)
 text(0.75,15,"posterior",col="darkgray",adj=0, cex = 1.5)
 text(0.1,2.5,"previa", cex = 1.5)
@@ -66,73 +72,43 @@ Ahora con todos los datos
 ```{r}
 x <- seq(from = 0, to = 1, by = 0.001)
 pos = dbeta(x, alpha + sum(quintral$Removidos) , beta + sum((quintral$Frutos - quintral$Removidos)))
-plot(x,pos, type="l", xlab = "prob remoción", lwd=3, col="darkgray", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
+plot(x,pos, type="l", xlab = "tasa de remoción", lwd=3, col="darkgray", ylab = "densidad de probabilidad", cex.lab=1.5, cex.axis=1.5, las=1)
 lines(x, dbeta(x,alpha,beta), lwd = 3)
 text(0.65,35,"posterior",col="darkgray",adj=0, cex = 1.5)
 text(0.1,5,"previa", cex = 1.5)
 ```
 
-Al igual que como vimos con MLE, cuantas más observaciones tenemos, menor es la incertidumbre alrededor del valor de probabilidad de remoción por fruto.
+Al igual que como vimos con MLE, cuantas más observaciones tenemos, menor es la incertidumbre alrededor del valor de tasa de remoción por fruto.
 
-# Podemos usar pbeta, qbeta para responder preguntas acerca de la posterior 
-# "tcredint" en el paquete emdbook de Bolker calcula los intervalos de credibilidad 
+Podemos usar las funciones `pbeta` y `qbeta` para responder preguntas acerca de la posterior. Por ejemplo, la probabilidad de que la tasa de remoción de frutos sea $<= 0.6$ es
+`pbeta(0.6, alpha + sum(quintral$Removidos), beta + sum((quintral$Frutos - quintral$Removidos)))` = `r pbeta(0.6, alpha + sum(quintral$Removidos), beta + sum((quintral$Frutos - quintral$Removidos)))`
 
-# La probabilidad de que la remoción de frutos sea > 0.5 es
-pbeta(0.5, alpha+sum(Removidos),beta+sum((Frutos-Removidos)))
+El intervalo del 95% para la tasa de remoción de frutos es 
+```{r}
+qbeta(c(0.025,0.975), alpha + sum(quintral$Removidos), beta + sum((quintral$Frutos - quintral$Removidos)))
+```
 
-# El intervalo del 95% para la probabilidad de remoción de frutos es 
-qbeta(c(0.025,0.975),alpha+sum(Removidos),beta+sum((Frutos-Removidos)))
+Para calcular el intrevalo de credibilidad podemos usar la función `tcredint` del paquete de `R` que acompaña al [libro de Bolker](http://ms.mcmaster.ca/~bolker/emdbook/index.html).
 
-library(emdbook)   #para hacer el intervalo de credibilidad con la funcion tcredint()
-tcredint("beta",list(shape1= alpha+sum(Removidos), shape2 = beta+sum((Frutos-Removidos))),verbose=T)
-# El intervalo de credibilidad del 95% es apenas diferente:
+```{r}
+library(emdbook)
+tcredint("beta",list(shape1= alpha + sum(quintral$Removidos), shape2 = beta + sum((quintral$Frutos - quintral$Removidos))), verbose = TRUE)
+```
 
+***
 
-####################################################
+### Ejercicios
 
-# Las observaciones vienen de sitios diferentes 
+1. Calcular las posteriores de las tasas de remoción de frutos para los distintos sitios de muestreo.
 
-x = seq(from = 0, to = 1, by = 0.0001)
-plot(x,dbeta(x,alpha+sum(Removidos),beta+sum(Frutos-Removidos)), type = "l", lwd=2,col="darkgrey", xlab = expression(paste("Fruit Removal Probability ", (theta) ),ylab = "Posterior", xlim=c(0.3,0.9), ylim=c(0,45)))
-co = which(bosque=="c")  #bosque continuo
-fr = which(bosque=="f")  #bosque fragmentado
-lines(x,dbeta(x,alpha + sum(Removidos[co]), beta+sum((Frutos[co]-Removidos[co]))),lwd=2)
-lines(x,dbeta(x,alpha + sum(Removidos[fr]), beta+sum((Frutos[fr]-Removidos[fr]))),lwd=2)
-text(0.4,30,"fragments")
-text(0.8,38,"continuous forest")
-text(0.6,45,"all")
+2. Calcular los intervalos de credibilidad de las tasas de remoción de frutos para cada sitio y ver si hay superposición entre las estimaciones para bosque continuo y las de los sitios de bosque fragmentado.
 
-# Discriminamos por sitio y fragmentos de bosque. Hay fragmentos y bosque continuo en varios sitios diferentes
-x = seq(from = 0, to = 1, by = 0.0001)
+***
 
-op=par(lwd=2, cex.lab=1.3)
-plot(x,dbeta(x,alpha+sum(Removidos),beta+sum(Frutos-Removidos)), type = "l",col="darkgrey", xlab = expression(paste("Fruit Removal Probability ", (theta))),ylab = "Posterior Probability Density", xlim=c(0.2,0.9), ylim=c(0,45))
-coc = which(bosque=="c" & sitio == "Campanario")
-cot = which(bosque=="c" & sitio == "Tacul")
-coll = which(bosque=="c" & sitio == "Llao-Llao")
-frc = which(bosque=="f" & sitio == "Campanario")
-frt = which(bosque=="f" & sitio == "Tacul")
-frll = which(bosque=="f" & sitio == "Llao-Llao")
+```{r}
+sessionInfo()
+```
 
-lines(x,dbeta(x,alpha + sum(Removidos[coc]), beta+sum((Frutos[coc]-Removidos[coc]))), col="blue")
-lines(x,dbeta(x,alpha + sum(Removidos[cot]), beta+sum((Frutos[cot]-Removidos[cot]))), col="red")
-lines(x,dbeta(x,alpha + sum(Removidos[coll]), beta+sum((Frutos[coll]-Removidos[coll]))), col = "magenta")
-lines(x,dbeta(x,alpha + sum(Removidos[frc]), beta+sum((Frutos[frc]-Removidos[frc]))), col="blue")
-lines(x,dbeta(x,alpha + sum(Removidos[frt]), beta+sum((Frutos[frt]-Removidos[frt]))), col="red")
-lines(x,dbeta(x,alpha + sum(Removidos[frll]), beta+sum((Frutos[frll]-Removidos[frll]))),col="magenta")
+***
 
-text(0.4,25,"Fragments", cex=1.2)
-text(0.8,28,"Continuos Forests", cex=1.2)
-text(0.6,45,"Pooled Data", cex=1.2)
-legend(0.27,40,c("Campanario", "Tacul", "Llao Llao"), lty = c(1,1,1), lwd = c(2,2,2), col=c("blue","red","magenta"), cex=1.2)
-#text(0.27,40,"Campanario",col="blue")
-#text(0.27,38,"Tacul",col="red")
-#text(0.27,36,"Llao Llao", col="magenta")
-par(op)
-
-#-------------------------------------------------------------------------------
-# Calcular los intervalos de credibilidad para la remoción de frutos en todos los sitios y fragmentos 
-
-
-
-
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 6 de Septiembre del 2015. ültima actualización: `r Sys.Date()`

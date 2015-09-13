@@ -86,7 +86,7 @@ Vemos que se trata de un *data frame* que es la manera preferida de `R` para org
 quintral$Frutos[1:3]
 ```
 
-Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la probabilidad de remoción es $0.5$ (si no nos acordamos cómo es la distribución Binomial o cómo usarla en `R` podemos pedir ayuda con `?dbinom`). En lo que sigue, vamos a llamar $\theta$ a la probabilidad de remoción por fruto.
+Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la tasa de remoción es $0.5$ (si no nos acordamos cómo es la distribución Binomial o cómo usarla en `R` podemos pedir ayuda con `?dbinom`). En lo que sigue, vamos a llamar $\theta$ a la tasa (probabilidad) de remoción de frutos.
 
 ```{r}
 theta <- 0.5
@@ -144,7 +144,7 @@ par(op)
 
 ## Buscando el máximo (o más bien el mínimo...)
 
-Queremos encontrar el valor de probabilidad de remoción por fruto que maximiza el likelihood (o minimiza el *negative log-likelihood*) del conjunto de datos. Una opción es hacerlo a lo bruto:
+Queremos encontrar el valor de tasa de remoción por fruto que maximiza el likelihood (o minimiza el *negative log-likelihood*) del conjunto de datos. Una opción es hacerlo a lo bruto:
   
 ```{r}
 theta <- seq(0, 1, length = 50)  
@@ -162,7 +162,7 @@ En este caso, tenemos una solución analítica para la estimación de la tasa de
 sum(quintral$Removidos)/sum(quintral$Frutos)
 ```
 
-**Pregunta (2)**: ¿Qué pasa si cambiamos la resolución del vector de probabilidades de remoción?
+**Pregunta (2)**: ¿Qué pasa si cambiamos la resolución del vector de tasas de remoción?
 
 ### Búsquedas más eficientes usando "optim" y "mle2" de [Ben Bolker](http://ms.mcmaster.ca/~bolker/)
 
@@ -176,7 +176,7 @@ binNLL <- function(theta,k,N){
 O1 <- optim(fn=binNLL, par=list(theta = 0.5), N=quintral$Frutos, k=quintral$Removidos, method="BFGS")
 ```
 
-Cuando ejecutamos esta función, en este caso aparecen algunos "warnings" de `NAs` producidos en `dbinom` pero nada de qué preocuparse (esto ocurre cuando `optim` prueba algún valore de probabilidad de remoción que no tiene sentido, por ejemplo -0.1).
+Cuando ejecutamos esta función, en este caso aparecen algunos "warnings" de `NaNs` producidos en `dbinom` pero nada de qué preocuparse (esto ocurre cuando `optim` prueba algún valor de tasa de remoción que no tiene sentido, por ejemplo -0.1).
 El objeto de salida de `optim`, que en este caso se llama `O1` (por falta de creatividad) contiene:
 
 - en `$par`, el valor óptimo del parámetro "p" 
@@ -236,7 +236,7 @@ abline(h=0, lwd=2, lty=2)
 **Pregunta (3)**: ¿Qué se puede decir sobre el ajuste del modelo a los datos?
 
 ### Ejercicio
-1. Estimar las probabilidades de remoción de frutos por sitio y tipo de bosque. Pista: pueden usar la función `which` para separar los datos correspondientes a cada caso.
+1. Estimar las tasas de remoción de frutos por sitio y tipo de bosque. Pista: pueden usar la función `which` para separar los datos correspondientes a cada caso.
 
 ***
 
