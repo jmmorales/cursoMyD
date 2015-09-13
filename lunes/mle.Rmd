@@ -13,15 +13,14 @@ output:
 library(knitr)
 options(figure_counter = FALSE)
 opts_knit$set(eval.after='fig.cap')
-knitr::opts_chunk$set(tidy=TRUE, fig.width=8, fig.height=6, results='markup', echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
 ```
-
 
 #   Máxima Verosimilitud (Likelihood) 
 
 ## Objetivos: 
- - Relacionar el "likelihood" de datos con parámetros de una distribución 
- - Familiarizarse con curvas de likelihood y log-likelihood 
+ - Relacionar el *likelihood* de datos con parámetros de una distribución 
+ - Familiarizarse con curvas de *likelihood* y *log-likelihood* 
  - Comprobar que la forma de la curva de likelihood depende del tamaño muestreal
  - Aprender a usar herramientas para encontrar óptimos
 
@@ -33,7 +32,7 @@ $$
 p(y)= \prod_i^n{ \frac{\lambda^{y_i} \exp(- \lambda)} {y_i!} }
 $$
 
-Podemos ver que el producto ($\prod$) se calcula usándo $i$ como índice para cada observación del set de datos $y$,  desde $i=1$ hasta $i=n$ que es el tamaño de $y$. Esta probabilidad de observar los datos es lo que llamamos *likelihood* o *verosimilitud*. Para hacer la cuenta de arriba tenemos que definir además el parámetro $\lambda$. La probabilidad de los datos depende entonces no sólo de los valores presentes en el set de datos sino también de la distribución utilizada y el valor del o los parámetros de la distribución. De manera más general, la expresión es un **modelo de datos**, es decir una descripción probabilística de como llegar a los datos. Más adelante veremos como combinando procesos determinísticos y estocásticos podemos armar modelos de datos realistas y satisfactorios.
+Podemos ver que el producto ($\prod$) se calcula usando $i$ como índice para cada observación del set de datos $y$,  desde $i=1$ hasta $i=n$ que es el tamaño de $y$. Esta probabilidad de observar los datos es lo que llamamos *likelihood* o *verosimilitud*. Para hacer la cuenta de arriba tenemos que definir además el parámetro $\lambda$. La probabilidad de los datos depende entonces no sólo de los valores presentes en el set de datos sino también de la distribución utilizada y el valor del o los parámetros de la distribución. De manera más general, la expresión es un **modelo de datos**, es decir una descripción probabilística de como llegar a los datos. Más adelante veremos como combinando procesos determinísticos y estocásticos podemos armar modelos de datos realistas y satisfactorios.
 
 Veamos ahora como calcular la probabilidad de estos datos en `R` asumiendo $\lambda = 1$:
 
@@ -64,11 +63,13 @@ sum(dpois(y, lambda=lambda, log = TRUE))
 
 Con un $\lambda$ de $2$ la *log likelihood* de los datos empeora, pero podemos seguir probando distintos valores de $\lambda$ hasta encontrar el que hace más posible al set de datos. Esta es la idea detrás de los análisis de máxima verosimilitud (a falta de mejor nombre) o de *maximum likelihood* (si estamos dispuestos a usar palabras en inglés). Normalmente tenemos más de un parámetro en nuestro modelo de datos, y usamos aglún algoritmo de búsqueda para encontrar la combinación de parámetros que hace más probables a nuestros datos (por tradición, los algoritmos buscan minimizar el menos logaritmo de la verosimilitud de nuestros datos). Esta idea de buscar combinaciones de parámetros que maximizan la verosimilitud de los datos se conoce como *maximum likelihood estimation* y muchas veces aparece abreviado como MLE.
 
+***
+
 ### Ejemplo: Remoción de Frutos
 
 [Mariano Rodriguez-Cabal](https://sites.google.com/site/rodriguezcabal/home) estudió la remoción de frutos de quintral por parte del monito del monte en bosque continuo y fragmentos en 3 sitios pareados con la idea de ver si la fragmentación afectabla la interacción entre este marsupial y el muérdago. El trabajo  está dispoible [aquí](http://sites.google.com/site/modelosydatos/Rodriguez-Cabal_07.pdf)
  
-Los datos son de número de frutos removidos de un total disponible. Podemos usar una distribución Binomial para capturar la variabilidad (estocasticidad) en el proceso de remoción de frutos. Es decir, asumimos que la distribución Binomial tiene sentido para representar el proceso que genera los datos.
+Los datos son de número de frutos removidos en la temporada reproductiva de un total disponible. Podemos usar una distribución Binomial para capturar la variabilidad (estocasticidad) en el proceso de remoción de frutos. Es decir, asumimos que la distribución Binomial tiene sentido para representar el proceso que genera los datos.
  
 ```{r}
 url <- "https://github.com/jmmorales/cursoMyD/raw/master/Data/quintral.txt"
@@ -85,15 +86,16 @@ Vemos que se trata de un *data frame* que es la manera preferida de `R` para org
 quintral$Frutos[1:3]
 ```
 
-Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la probabilidad de remoción es $0.5$ (si no nos acordamos cómo es la distribución Binomial o cómo usarla en `R` podemos pedir ayuda con `?dbinom`)
+Ahora calculemos el likelihood para la primera observación del set de datos asumiendo que la probabilidad de remoción es $0.5$ (si no nos acordamos cómo es la distribución Binomial o cómo usarla en `R` podemos pedir ayuda con `?dbinom`). En lo que sigue, vamos a llamar $\theta$ a la probabilidad de remoción por fruto.
 
 ```{r}
-dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=0.5)
+theta <- 0.5
+dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta)
 ```
 
 Normalmente trabajamos con log-likelihoods:
 ```{r}
-dbinom(quintral$Removidos[1],size=quintral$Frutos[1],prob=0.5,log=TRUE)
+dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta, log=TRUE)
 ```
 
 ¿Cómo cambia la probabilidad de observar ese dato cuando cambiamos el parámetro de probabilidad de éxito (remoción) en la Binomial? Como en este caso el likelihood depende de un solo parámetro, podemos responder a esta pregunta gráficamente. 
@@ -108,7 +110,7 @@ plot(theta,-dbinom(quintral$Removidos[1], size=quintral$Frutos[1], prob=theta, l
 par(op)
 ```
 
-También podemos ver cómo cambia el Likelihood cuando cambiamos el número de observaciones que consideramos. ¿Cómo interpretan estos cambios?
+También podemos ver cómo cambia el Likelihood cuando cambiamos el número de observaciones que consideramos. 
 
 ```{r}
 op<-par(mfrow = c(2,3), lwd=2, bty="l", cex.lab=1.5, las = 1, mar = c(5,4,1,1))
@@ -136,22 +138,23 @@ plot(theta, nLL2, type = "l",xlab=expression(theta), ylab="", main="", ylim=c(0,
 plot(theta, nLL10, type = "l", xlab="", ylab="", main="", ylim=c(0,100))
 par(op)
 ```
+**Pregunta (1)**: ¿Cómo se interpretan estos cambios?
 
------------
+***
 
 ## Buscando el máximo (o más bien el mínimo...)
 
 Queremos encontrar el valor de probabilidad de remoción por fruto que maximiza el likelihood (o minimiza el *negative log-likelihood*) del conjunto de datos. Una opción es hacerlo a lo bruto:
   
 ```{r}
-p <- seq(0, 1, length = 50)  
-nLL <- array(NA, length(p))  
+theta <- seq(0, 1, length = 50)  
+nLL <- array(NA, length(theta))  
 
-for (i in 1:length(p)) {
-  nLL[i] <- -sum(dbinom(quintral$Removidos, size=quintral$Frutos, prob=p[i], log=TRUE))
+for (i in 1:length(theta)) {
+  nLL[i] <- -sum(dbinom(quintral$Removidos, size=quintral$Frutos, prob=theta[i], log=TRUE))
 }
 
-p[which(nLL == min(nLL))]
+theta[which(nLL == min(nLL))]
 ```
 
 En este caso, tenemos una solución analítica para la estimación de la tasa de remoción y podemos compararla con la que acabamos de calcular:
@@ -159,21 +162,21 @@ En este caso, tenemos una solución analítica para la estimación de la tasa de
 sum(quintral$Removidos)/sum(quintral$Frutos)
 ```
 
-¿Qué pasa si cambiamos la resolución en el vector de probabilidades de remoción (cambiando `length = 50`)?
+**Pregunta (2)**: ¿Qué pasa si cambiamos la resolución del vector de probabilidades de remoción?
 
 ### Búsquedas más eficientes usando "optim" y "mle2" de [Ben Bolker](http://ms.mcmaster.ca/~bolker/)
 
-Claramente no podemos recurrir a búsquedas gráficas o de fuerza bruta cuando tenemos modelos con varios parámetros. Entonces, tenemos que hacer uso de los algoritmos de búsqueda que están disponibles en `R` con la función `optim`. Primero tenemos que definir una función para "optimizar" que para `optim` viene a ser encontrar el mínimo. Además, tenemos que definir por dónde empezar a buscar y con qué método.
+Claramente no podemos recurrir a búsquedas gráficas o de fuerza bruta cuando tenemos modelos con varios parámetros. Entonces, tenemos que hacer uso de los algoritmos de búsqueda que están disponibles en `R`, por ejemplo con la función `optim`. Primero tenemos que definir una función para "optimizar", que para `optim` viene a ser encontrar el mínimo. Además, tenemos que definir por dónde empezar a buscar y con qué método.
 
 ```{r}
-binomNLL1 <- function(p,k,N){
-  -sum(dbinom(k, prob=p, size=N, log=TRUE)) 
+binNLL <- function(theta,k,N){
+  -sum(dbinom(k, prob=theta, size=N, log=TRUE)) 
 }
 
-O1 <- optim(fn=binomNLL1, par=list(p = 0.5), N=quintral$Frutos, k=quintral$Removidos, method="BFGS")
+O1 <- optim(fn=binNLL, par=list(theta = 0.5), N=quintral$Frutos, k=quintral$Removidos, method="BFGS")
 ```
 
-Hay algunos "warnings" de `NAs` producidos en `dbinom` pero nada de qué preocuparse...
+Cuando ejecutamos esta función, en este caso aparecen algunos "warnings" de `NAs` producidos en `dbinom` pero nada de qué preocuparse (esto ocurre cuando `optim` prueba algún valore de probabilidad de remoción que no tiene sentido, por ejemplo -0.1).
 El objeto de salida de `optim`, que en este caso se llama `O1` (por falta de creatividad) contiene:
 
 - en `$par`, el valor óptimo del parámetro "p" 
@@ -187,7 +190,7 @@ La función `optim` en `R` es una función general para optimización, pero para
 ```{r}
 library(bbmle) 
 
-m1 <- mle2(minuslogl=binomNLL1, start = list(p = 0.5), data = list(N=quintral$Frutos, k=quintral$Removidos), method="BFGS")
+m1 <- mle2(minuslogl=binNLL, start = list(theta = 0.5), data = list(N=quintral$Frutos, k=quintral$Removidos), method="BFGS")
 ```
 
 En `m1` tenemos la función usada, los valores de los coeficientes y el log-likelihood estimado. Podemos ver más detalles con `summary(m1)`
@@ -230,12 +233,12 @@ abline(h=0, lwd=2, lty=2)
 ```
 
 
-¿Qué se puede decir sobre el ajuste del modelo a los datos?
+**Pregunta (3)**: ¿Qué se puede decir sobre el ajuste del modelo a los datos?
 
 ### Ejercicio
-1. Estimar las probabilidades de remoción de frutos por sitio y tipo de bosque.
+1. Estimar las probabilidades de remoción de frutos por sitio y tipo de bosque. Pista: pueden usar la función `which` para separar los datos correspondientes a cada caso.
 
--------
+***
 
 ## Ejemplo: Deposición de polen en flores de pomelo 
 
@@ -245,68 +248,74 @@ abline(h=0, lwd=2, lty=2)
 ```{r}
 apis <- read.table("https://sites.google.com/site/modelosydatos/polen_Apis.csv",header=T,sep=",")
 
-# Graficar los datos (plot) 
 plot(apis$visitas, apis$granos, xlab="Número de Visitas", 
-     ylab="Granos de Polen Depositados", pch=19)
+     ylab="Granos de Polen Depositados", pch=19, cex.lab = 1.2)
 title(main= expression(paste("Eficiencia de ", italic(Apis~mellifera))))
 ```
 
-Podemos tratar de descibir esta relación entre visitas y deposición de polen como una función lineal asumiendo una distribución de Poisson para los granos de polen.
+Podemos tratar de descibir esta relación entre visitas y deposición de polen como una función lineal asumiendo una distribución de Poisson para los granos de polen. Una forma de escribir este modelo es:
+
+$$
+\begin{aligned}
+& y_i \sim \textrm{Poisson}(\lambda_i) \\
+& \lambda_i = \beta_0 + \beta_1 \times v_i\\ 
+& \textrm{para  } i \textrm{ de } 1 \textrm{ a } n\\
+\end{aligned}
+$$
+
+Donde $y$ son las observaciones (número de granos de polen depositados) y $v$ la variable predictora o la "covariable" (número de visitas de abejas) y los subíndices $i$ indican cada una de las $n$ observaciones. El *script* que sigue define y ajusta este modelo usando `mle2`.
 
 ```{r}
-# definir la función de negative log-Likelihood 
-fnLIN<-function (p) {
- y0 <- p[1]
- a <- p[2]
- lambda <- y0 + a * visitas   # qué problemas podemos tener con esta fórmula?
+poislin <- function (pars) {
+ y0 <- pars[1]
+ b <- pars[2]
+ lambda <- y0 + b * visitas 
  -sum(dpois(granos, lambda, log=TRUE))
 }
 
-# definimos nombres para los parámetros 
-parnames(fnLIN) <- c("y0", "a")
+parnames(poislin) <- c("y0", "b")
 
-# ajustamos a los datos
-mLIN <- mle2(fnLIN, start = c(y0 = 10, a = 3), 
+fit.lin <- mle2(poislin, start = c(y0 = 10, b = 3), 
              data = list(visitas = apis$visitas, granos = apis$granos))
 
-# ver resultados
-summary(mLIN)
+summary(fit.lin)
 
-# agregamos el modelo ajustado al gráfico anterior
 plot(apis$visitas, apis$granos,xlab="Número de Visitas", 
-     ylab="Granos de Polen Depositados", pch=19)
+     ylab="Granos de Polen Depositados")
 title(main= expression(paste("Eficiencia de ", italic(Apis~mellifera))))
 x = 0:9 # vector de valores de referencia
-lines(x, mLIN@coef[1] + x * mLIN@coef[2], lwd=2)
+lines(x, fit.lin@coef[1] + x * fit.lin@coef[2], lwd=3)
 ```
 
-Alternativamente podemos pensar que hay un efecto de saturación:
+**Pregunta (4)**: ¿Qué inconvenientes podríamos enocontrar tratando de ajustar este modelo asumiendo que las observaciones tienen una distribución de Poisson?
+
+Pensando un poco, quizás sea esperable que en algún momento la cantidad de polen por estigma se sature ya que no podemos amontonar infinitos granos de polen. Cambiar el modelo anterior a un modelo de saturación no es muy complicado:
 
 ```{r}
-# neg log L
-fnSAT <- function (p) {
- y0 <- p[1]
- a <- p[2]
- b <- p[3]
- lambda <- y0 + a*(1-exp(-b*visitas))  # qué otro modelo de saturación podríamos usar?
+poissat <- function (pars) {
+ y0 <- pars[1]
+ a <- pars[2]
+ b <- pars[3]
+ lambda <- y0 + a*(1-exp(-b*visitas))  
  -sum(dpois(granos, lambda, log=TRUE))
 }
 
-parnames(fnSAT) <- c("y0", "a", "b")
-mSAT <- mle2(fnSAT, start = c(y0 = 10, a = 41, b = 0.16), 
+parnames(poissat) <- c("y0", "a", "b")
+fit.sat <- mle2(poissat, start = c(y0 = 10, a = 41, b = 0.16), 
              data = list(visitas = apis$visitas, granos = apis$granos))
 
-summary(mSAT)
+summary(fit.sat)
 plot(apis$visitas, apis$granos,xlab="Número de Visitas", 
      ylab="Granos de Polen Depositados", pch=19)
 title(main= expression(paste("Eficiencia de ", italic(Apis~mellifera))))
-lines(x, mSAT@coef[1] + mSAT@coef[2]*(1-exp(-mSAT@coef[3]* x)), lwd=2, col=2)
+lines(x, fit.sat@coef[1] + fit.sat@coef[2]*(1-exp(-fit.sat@coef[3]* x)), lwd=3)
 ```
 
-¿Cómo ajustan estos modelos a los datos?
-¿Qué otros modelos podríamos probar? 
+**Pregunta (5)**: ¿Cómo ajustan estos modelos a los datos?
 
------------
+**Pregunta (6)**: ¿Qué otros modelos podríamos probar? 
+
+***
 
 ```{r}
 sessionInfo()
@@ -314,6 +323,4 @@ sessionInfo()
 
 -----------
 
-[Juan Manuel Morales](https://sites.google.com/site/pajarom/)
-date: `r Sys.Date()`
-
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 6 de Septiembre del 2015. ültima actualización: `r Sys.Date()`
