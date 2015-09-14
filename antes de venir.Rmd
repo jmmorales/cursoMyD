@@ -1,0 +1,48 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "intro"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+---
+
+# Bienvenidos
+
+En el curso vamos a usar `R` con algunos de sus paquetes. Además, usaremos `JAGS` para MCMC. Antes de llegar al primer día del curso asegúrense de tener instalada una versión de `R` mayor o igual 3.1. Descargar desde [cran](http://www.r-project.org/)
+
+También es necesario instalar [JAGS](http://mcmc-jags.sourceforge.net). Pueden descargarlo desde [aquí](http://sourceforge.net/projects/mcmc-jags/files/)
+
+## Paquetes para `R` 
+
+Copiar y pegar este script en `R para instalar algunos paquetes que vamos a usar durante el curso
+
+```{r, eval=FALSE}
+get.packages <- function () 
+{
+    pkglist = c("bbmle", "boot", "chron", "circular", "coda", "ellipse","emdbook",
+        "gplots", "gtools", "gdata", "Hmisc", "jagsUI", "lattice", "RCurl")
+    inst.pkgs = rownames(installed.packages())
+    newpkgs <- pkglist[!pkglist %in% inst.pkgs]
+    if (length(newpkgs) > 0) {
+        do.call("install.packages", list(pkglist))
+    }
+}
+
+get.packages()
+```
+
+Normalmente usamos algún editor para escribir comandos y pasárselos a `R`. Recomendamos que usen [RStudio](http://rstudio.org/).
+
+***
+
+## Para ver antes de venir:
+
+Recomendamos que antes de arrancar con el curso, vean la breve intro a `R` que preparamos [aquí](http://rpubs.com/pajaro/intro). Si bien esperamos que muchos de ustedes ya sean usuarios de `R` quizás no hayan visto todavía como hacer *loops* o escribir funciones.
+
+Por último, sería bueno que lean el artículo de [Clark 2005](https://sites.google.com/site/modelosydatos/Clark_05.pdf). La idea es que para cuando terminen con el curso, todo lo que dice Clark tenga sentido...
+
+***
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/) . 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`
