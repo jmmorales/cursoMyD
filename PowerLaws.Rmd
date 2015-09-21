@@ -1,0 +1,54 @@
+---
+title: "powerlaw"
+author: "jmm"
+date: "September 20, 2015"
+output: html_document
+---
+
+Some notes on plotting power law data moslty taken from [Newman 2006](http://arxiv.org/pdf/cond-mat/0412004.pdf). 
+
+We can simulate some data from a power law distribution using an inverse appoach:
+```{r}
+rpow <- function(n, mu = -2, ymin = 1, ymax = 10e4){
+  x <- runif(n, 0, 1)
+  y <- ( (ymax^(mu+1) - ymin^(mu+1)) * x + ymin^(mu+1) )^(1/(mu+1))
+}
+
+ymin <- 60
+ymax <- 10e4
+y <- rpow(10000, mu = -1.5, ymin = ymin, ymax = ymax)
+```
+One option is to plot a histogram on log log scale but this results in noisy pattern at large scales:
+
+```{r}
+tmp <- hist(y, 200)
+plot(tmp$mids, tmp$counts, log = "xy")
+```
+
+A good alternative is to use a log scaled binning in the histogram (and then normalizing counts by bin size):
+
+```{r}
+require(emdbook)
+bins <- lseq(ymin, ymax, length.out = 100)
+tmp <- hist(y, breaks = bins)
+binsize <- bins[2:length(bins)] - bins[1:(length(bins) - 1)]
+normcounts <- tmp$counts / binsize
+plot(tmp$mids, normcounts, log = "xy")
+```
+
+By far the best alternative is to plot the "rank frequency distribution"
+
+```{r}
+  
+ys <- sort(y)
+n <- length(y)
+vals <- unique(ys)
+cs <- cumsum(tabulate(match(ys, vals)))/n
+  
+#plot(vals, 1-cs, log = "xy", type = "l")
+
+plot(vals, 1-cs, type="l", log="xy", axes = FALSE)
+axis(side = 2, at = (locs <- 1/c(1,10,100,1000, 10000, 100000)), labels = locs, las=1)
+axis(side = 1, at = (locs <- c(1,10,100,1000, 10000, 100000)))
+
+```

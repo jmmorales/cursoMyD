@@ -10,7 +10,7 @@ output:
 
 # Bienvenidos
 
-En el curso vamos a usar `R` con algunos de sus paquetes. Además, usaremos `JAGS` para MCMC. Antes de llegar al primer día del curso asegúrense de tener instalada una versión de `R` mayor o igual 3.1. Descargar desde [cran](http://www.r-project.org/)
+En el curso vamos a usar `R` con algunos de sus paquetes. Además, usaremos `JAGS` para MCMC. Antes de llegar al primer día del curso asegúrense de tener instalada una versión de `R` mayor o igual 3.1. Se puede descargar desde [cran](http://www.r-project.org/)
 
 También es necesario instalar [JAGS](http://mcmc-jags.sourceforge.net). Pueden descargarlo desde [aquí](http://sourceforge.net/projects/mcmc-jags/files/)
 
