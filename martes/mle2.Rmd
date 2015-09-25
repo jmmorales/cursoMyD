@@ -1,0 +1,103 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "mle2"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+```
+
+Objetivos:
+
+- Familiarizarse con la formulación de funciones de likelihood
+- Simular datos con distintas funciones de likelihood
+- Ajustar los datos simulados usando `mle2`
+
+Empecemos con una regresión lineal normal. En este caso el modelo es:
+
+$$
+\begin{aligned}
+& y_i \sim N(\mu_i, \sigma^{2}) \\
+& \mu_i = \beta_0 + \beta_1 \times x_i\\
+& \textrm{para } i \textrm{ de } 1:n \\
+\end{aligned}
+$$
+
+Para simular datos de acuerdo con este modelo, primero tenemos que definir los parámetros y la variable predictora (también llamada covariable) y el número de observaciones
+
+```{r}
+b0 <- 0
+b1 <- 1
+s <- 3
+n <- 30
+set.seed(1234)
+x <- runif(n,0,30)
+```
+
+Ahora podemos calcular $\mu$ para cada $x$ y simular datos con una distribución Normal
+
+```{r}
+m <- b0 + b1*x
+y <- rnorm(n,mean=m, sd=s)
+```
+
+Este modelo se puede ajustar fácilmente en R usando el comando `lm`, pero vamos a tomarnos el trabajo de escribir la función de likelihood y ajustarlo con `mle2`
+
+```{r}
+neg.log.lik.lm <- function(pars){
+  b0 <- pars[1]
+  b1 <- pars[2]
+  s  <- pars[3]
+  m  <- b0 + b1*x
+  nll <- - sum(dnorm(y, mean=m,sd=s, log=TRUE))
+  return(nll)
+}
+
+library(bbmle)
+
+parnames(neg.log.lik.lm) <- c("b0", "b1", "s")
+
+fit.lm <- mle2(neg.log.lik.lm, start = c(b0=0, b1=0, s=1), 
+             data = list(y = y, x = x))
+
+summary(fit.lm)
+```
+
+Podemos graficar los datos y el modelo ajustado. Y ya que estamos comparamos con el resultado de `lm` y ver que da lo mismo...
+También podemos agregar al gráfico la relación verdadera entre $x$ y $\mu$
+
+```{r, fig.width = 5, fig.height = 4}
+plot(x,y)
+
+xvec <- seq(min(x), max(x), length=100)
+lines(xvec, fit.lm@coef[1] + fit.lm@coef[2]*xvec, lwd=3)
+lines(xvec, b0 + b1*xvec, lwd=2, col="gray")
+abline(lm(y~x), lty=2, col=2, lwd=3)
+```
+
+Una buena práctica cuando hacemos regresiones de este tipo es centrar y estandarizar las variables predictoras:
+
+```{r}
+xs <- scale(x)
+fit.lms <- mle2(neg.log.lik.lm, start = c(b0=10, b1=10, s=1), 
+             data = list(y = y, x = xs))
+
+```
+
+# Ejercicios
+
+1- Hacer simulaciones y análisis como los de arriba pero reemplazando la Normal por:
++ Poisson
++ Binomial Negativa
+
+2- Reemplazar la función lineal por una Holling tipo II y usar una Poisson para la parte estocástica del modelo.
+
+3- Simular y ajustar con mle2 un modelo de dinámica poblacional estocástico (exponencial y en tiempo discreto)
