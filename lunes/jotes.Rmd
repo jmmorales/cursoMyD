@@ -1,0 +1,102 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "jotes"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+```
+
+
+## Aves carroñeras y rutas 
+[Sergio Lambertucci](http://uncoma.academia.edu/SergioALambertucci) y colaboradores pusieron cadáveres de ovejas a distintas distancias de rutas y observaron la actividad de aves carroñeras. Estudian la detección y el uso de carroña en relación a la distancia a las rutas por cóndores y otras aves rapaces. El trabajo completo está [aquí](https://sites.google.com/site/modelosydatos/Lambertucci_09.pdf)
+
+Estos datos presentan exceso de ceros (sitios donde no se registraron rapaces), entonces necesitamos escribir una función para la regresión binomial "inflada" en ceros. Para el total de aves observadas en cada sitio de carroña (volando y en tierra) podemos asumir una Poisson con exeso de ceros. Para la fracción de aves que bajan hasta la carroña asumimos una Binomial.
+
+Además, vamos a usar la función `plogis` para pasar de valores reales (positivos y negativos) a valores entre cero y uno (este es un "logit link" en la jerga de GLM). Para ver como funciona esta función hacemos:
+
+```{r}
+tmp <- seq(from=-5, to=5, by=0.01) 
+op <- par(cex.lab = 1.3 , font.lab = 2, cex.axis = 1.3, bty = "n", las=1, lwd=3)
+plot(tmp, plogis(tmp), type="l")
+par(op)
+```
+
+De esta forma, podemos usar covariables para la probabilidad de éxito de una binomial.
+Todo junto queda:
+
+```{r, fig.height=6, fig.width=6}
+library(bbmle)
+condor <- read.table("https://sites.google.com/site/modelosydatos/condor.txt", header=T)
+head(condor) # revisamos los datos
+                                                     
+zibinregc = function(p) {
+  av = p[1] # probabilidad (sin transformar) de detectar la carroña
+  ad = p[2] # ordenada al origen de la probabilidad de bajar a comer
+  bd = p[3] # la pendiente de la probabilidad de bajar a comer en función de la distancia a la ruta
+  an = p[4] # ordenada al origen de abundancia 
+  bn = p[5] # pendiente de la abundancia en función de la distancia a la ruta
+  
+  v = plogis(av)  #  probabilidad de detectar una carroña 
+  pr = plogis(ad + bd * condor$Dist/1000) # probabilidad de bajar a comer
+  lambda = exp(an + bn * condor$Dist/1000) # Poisson en función de la distancia a la ruta
+  nllp = -sum(log(ifelse(k+f==0,(1-v) + v*dpois(0,lambda), v*dpois(k+f,lambda))))  
+  # Poisson likelihood inflada en ceros
+  nllb = -sum(dbinom(k,k+f,prob=pr,log=T))   # likelihood Binomial
+  return(nllp+nllb) # el resultado es la suma de las dos negative log-likelihoods
+}
+
+# definir los nombres de los parámetros para que los use mle2
+parnames(zibinregc) = c("av","ad","bd","an","bn")  
+
+#Ajustamos la funcion para los cóndores
+fit.C <- mle2(minuslogl=zibinregc, start=c(av=1, ad=2, bd=0, an=2, bn=0), 
+              data=list(k=condor$Condor,f=condor$CoFl, Dist=condor$Dist))  
+
+summary(fit.C) # ver los resultados
+
+par_cof <- fit.C@coef # extraer los coeficientes (MLE de los parámetros)
+d = 0:7000   # variable para graficar distancia
+
+# gráfico de los ajustes
+op <- par(mfrow=c(2,1), cex.lab = 1.3 , font.lab = 2, cex.axis = 1.3, bty = "n", las=1, lwd=3)
+plot(condor$Dist,(condor$Condor+condor$CoFl), ylab = "# de Cóndores", 
+     xlab="")                                    
+lines(d,exp(par_cof[4]+par_cof[5]*d/1000))
+plot(condor$Dist, condor$Condor/(condor$Condor+condor$CoFl),
+     ylab="Prop. Cóndores Comiendo", xlab="Distancia a la Ruta")
+lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
+par(op)             
+
+# Lo mismo para Jote negro 
+fit.J <- mle2(zibinregc, start = c(av=2, ad=2, bd=0, an=2, bn=0), 
+              data = list(k=condor$JoteN,f=condor$JNFI, Dist=condor$Dist))  
+
+summary(fit.J)
+par_cof <- fit.J@coef
+
+op <- par(mfrow=c(2,1), cex.lab = 1.3 , font.lab = 2, cex.axis = 1.3, bty = "n", las=1, lwd=3)                           
+plot(condor$Dist,(condor[,11]+condor[,12]), ylab = "# de Jote Negro", 
+     xlab="")                                    
+lines(d,exp(par_cof[4]+par_cof[5]*d/1000))
+plot(condor$Dist, condor[,11]/(condor[,11]+condor[,12]),
+     ylab="Prop. Jote Negro Comiendo", xlab="Distancia a la Ruta")
+lines(d,plogis(par_cof[2]+par_cof[3]*d/1000))
+par(op) 
+```
+
+***
+
+```{r}
+sessionInfo()
+```
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/) . 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`
