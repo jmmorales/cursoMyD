@@ -15,13 +15,14 @@ opts_knit$set(eval.after='fig.cap')
 knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
 ```
 
-Objetivos:
+# Más sobre MLE
+##Objetivos:
 
 - Familiarizarse con la formulación de funciones de likelihood
 - Simular datos con distintas funciones de likelihood
 - Ajustar los datos simulados usando `mle2`
 
-Empecemos con una regresión lineal normal. En este caso el modelo es:
+Empecemos con una regresión lineal normal con una sola variable predictora. En este caso el modelo es:
 
 $$
 \begin{aligned}
@@ -49,7 +50,7 @@ m <- b0 + b1*x
 y <- rnorm(n,mean=m, sd=s)
 ```
 
-Este modelo se puede ajustar fácilmente en R usando el comando `lm`, pero vamos a tomarnos el trabajo de escribir la función de likelihood y ajustarlo con `mle2`
+Este modelo se puede ajustar fácilmente en `R` usando el comando `lm`, pero vamos a tomarnos el trabajo de escribir la función de likelihood y ajustarlo con `mle2`
 
 ```{r}
 neg.log.lik.lm <- function(pars){
@@ -83,7 +84,7 @@ lines(xvec, b0 + b1*xvec, lwd=2, col="gray")
 abline(lm(y~x), lty=2, col=2, lwd=3)
 ```
 
-Una buena práctica cuando hacemos regresiones de este tipo es centrar y estandarizar las variables predictoras:
+Una buena práctica cuando hacemos regresiones de este tipo es centrar y estandarizar las variables predictoras (discutir por qué!):
 
 ```{r}
 xs <- scale(x)
@@ -98,6 +99,12 @@ fit.lms <- mle2(neg.log.lik.lm, start = c(b0=10, b1=10, s=1),
 + Poisson
 + Binomial Negativa
 
-2- Reemplazar la función lineal por una Holling tipo II y usar una Poisson para la parte estocástica del modelo.
+2- Reemplazar la función lineal por una de saturación y usar una Poisson para la parte estocástica del modelo.
 
-3- Simular y ajustar con mle2 un modelo de dinámica poblacional estocástico (exponencial y en tiempo discreto)
+```{r}
+sessionInfo()
+```
+
+-----------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`

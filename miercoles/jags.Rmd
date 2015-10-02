@@ -1,0 +1,256 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "mle"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+    
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg')
+```
+
+# Análisis Bayesianos
+
+## Previas Conjugadas
+
+Simulemos datos de remoción de frutos en 10 plantas con 100 frutos cada una usando una Binomial:
+
+```{r}
+set.seed(1234)
+nobs <- 10    # número de observaciones 
+frutos <- 100 # frutos disponibles
+p.rem <- 0.2  # probabilidad de remoción por fruto
+removidos <- rbinom(nobs,size=frutos, prob=p.rem)
+
+```
+
+La idea principal detrás de los análisis Bayesianos es poder decir algo acerca de las variables aleatorias **no observadas** en base a las que sí observamos. Para llegar a ese objetivo, usamos reglas de probabilidades. Podemos usar la regla de Bayes en términos de los parámetros ($\theta$) y los datos ($y$):  $p(\theta| y)=p(y |\theta) \times p(\theta) / p(y)$. En este caso, como el "modelo de datos" es una Binomial con una probabilidad de éxito fija, logramos una solución analítica si usamos como previa para $\theta$ una distribución Beta (ver el [Bestiario](https://sites.google.com/site/pajarom/me/Bestiario_sp.pdf)). 
+
+La distribución Beta tiene dos parámetros ($\alpha$ y $\beta$) que se interpretan como la cantidad éxitos y fracasos observados previamente $+1$. Entonces, si consideramos que hasta ahora no hemos visto nada (cero éxitos y cero fracasos), usamos como previa una Beta con $\alpha=1$ y $\beta=1$. Esta opción corresponde a una previa "chata":
+
+```{r, fig.width = 5, fig.height = 5}
+alpha <- 1
+beta <- 1
+```
+
+Para obetener la posterior de la probabilidad de remoción por fruto, actualizamos los parámetros de la Beta en base a la cantidad de frutos removidos (éxitos) y la cantidad de frutos que no fueron removidos (fracasos). Podemos ver por ejemplo, cómo queda la posetior luego de ver un sólo dato y luego de ver todos los datos:
+
+```{r, fig.width = 7.5, fig.height = 5}
+xvec <- seq(0,1,by=0.001)
+op <- par(mfrow=c(1,2))
+plot(xvec, dbeta(xvec,alpha+removidos[1],beta+frutos-removidos[1]), type = "l",lwd=2,col="gray", 
+     xlab = expression(paste("valor de ", theta)), ylab = "Densidad de Probabilidad", main="n=1")
+lines(xvec, dbeta(xvec,alpha,beta))
+abline(v = removidos[1]/frutos, lwd=2, lty=2)
+text(0.3,5,"posterior",col="darkgray",adj=0)
+text(0.25,7.5, "dato")
+text(0.6,1.5,"previa")
+
+plot(xvec, dbeta(xvec,alpha+sum(removidos),beta+sum(frutos-removidos)), type = "l",lwd=2,col="gray", 
+     xlab = expression(paste("valor de ", theta)), ylab = "Densidad de Probabilidad", main="n=10")
+lines(xvec, dbeta(xvec,alpha,beta))
+abline(v = sum(removidos)/(frutos*nobs), lwd=2, lty=2)
+text(0.3,10,"posterior",col="darkgray",adj=0)
+text(0.25,25, "dato")
+text(0.6,3,"previa")
+
+```
+
+Una vez que tenemos la posterior, podemos definir distitas cosas. Por ejemplo el valor esperado de tasa de remoción por fruto es `(alpha+sum(removidos)) / (alpha+sum(removidos) + beta+sum(frutos-removidos))` =  `r (alpha+sum(removidos)) / (alpha+sum(removidos) + beta+sum(frutos-removidos))`. La probabilidad de que la tasa de remoción por fruto sea menor al 16% es
+
+```{r}
+pbeta(0.16, alpha+sum(removidos),beta+sum(frutos-removidos))
+```
+
+O la probabilidad de que la tasa de remoción por fruto sea mayor que 20%:
+```{r}
+1-pbeta(0.2, alpha+sum(removidos),beta+sum(frutos-removidos))
+```
+O el intervalo del 95% para la probabilidad de remoción de frutos:
+```{r}
+qbeta(c(0.025,0.975),alpha+sum(removidos),beta+sum(frutos-removidos))
+```
+
+***************************
+
+# Just Another Gibbs Sampler
+
+Vamos a hacer el mismo análisis pero con JAGS. JAGS es un software que programa cadenas de Markov chain Monte Carto (MCMC) para modelos bayesianos (Plummer, M. (2003). JAGS: A program for analysis of Bayesian graphical models using Gibbs sampling.
+In Proceedings of the 3rd international workshop on distributed statistical computing (dsc 2003), Vienna, Austria.ISSN 1609-395X. Plummer, M. (2012). JAGS version 3.3.0 user manual.
+
+JAGS es un sucesor de BUGS, que es Bayesian inference using Gibbs sampling (Lunn, Jackson, Best, Thomas, & Spiegelhalter, 2013; Lunn, Thomas, Best, & Spiegelhalter, 2000). JAGS es muy parecido a BUGS pero tiene algunas funciones extra y a veces es más rápido. Además, JAGS se puede usar en Windows, Mac y Linux.
+
+Para usar JAGS (o BUGS) primero tenemos que definir el modelo usando un lenguaje sintético y guardarlo como un archivo de texto. Podemos escribir el modelo en un editor de texto o, como en el ejemplo de abajo, usar la función `cat` de R que nos permite escribir y guardar texto desde un script.
+
+```
+cat(file = "rem.bug", 
+"
+model{
+    theta ~ dbeta(1, 1)    
+    for (i in 1:nobs) {    
+      removidos[i] ~ dbin(theta, frutos)
+    }    
+  }"
+)
+```
+
+```{r, echo=FALSE}
+cat(file = "rem.bug", 
+"
+model{
+    theta ~ dbeta(1, 1)    
+    for (i in 1:nobs) {    
+      removidos[i] ~ dbin(theta, frutos)
+    }    
+  }"
+)
+```
+
+Además, tenemos que armar una lista con los datos que vamos a pasarle a JAGS, una función para generar los valores iniciales de las cadenas Markovianas, y una lista de los parámetros que queremos guardar.
+
+```{r}
+m.data <- list("nobs", "frutos", "removidos") 
+inits <- function() list(theta = runif(1,0,1))
+params <- c("theta")
+```
+
+Finalmente, definimos cuántas iteraciones queremos correr por cadena, cuántos valores vamos a ir descartado en una secuencia ("thin"), qué largo tiene el "burn in" y cuántas cadenas queremos correr.
+
+```{r}
+ni <- 1000  # número de iteraciones
+nt <- 1     # si descartamos "thin" algunos valores
+nb <- 500   # cuantas iteraciones usamos de "burn in"
+nc <- 3     # y cuantas cadenas corremos
+```
+
+
+Para llamar a JAGS desde `R` usamos el paquete `jagsUI` y la función `jags` de ese paquete
+
+```{r}
+library(jagsUI)
+
+m.sim <- jags(data = m.data, inits = inits, parameters.to.save = params, 
+             model.file = "rem.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin=nb)
+
+print(m.sim)
+```
+
+Una vez que corrimos las cadenas, podemos graficarlas
+```{r}
+jagsUI::traceplot(m.sim, parameters=c("theta")) 
+```
+
+Podemos graficar las posterior aproximada y compararla con la analítica
+
+```{r}
+plot(density(m.sim$sims.list$theta), lwd=2, main="", ylim=c(0,35))
+lines(xvec, dbeta(xvec,alpha+sum(removidos),beta+sum(frutos-removidos)), lwd=2,col="gray")
+```
+
+Y podemos comparar las estimaciones acerca de la posterior con las que calculamos analíticamente. Por ejemplo, el valor esperado de tasa de remoción por fruto es
+
+```{r}
+m.sim$mean$theta
+# o bien
+mean(m.sim$sims.list$theta)
+# que es parecido a
+(alpha+sum(removidos)) / (alpha+sum(removidos) + beta+sum(frutos-removidos))
+
+```
+
+Si queremos ver la probabilidad de que la tasa de remoción por fruto sea menor al 15% hacemos
+
+```{r}
+length(which(m.sim$sims.list$theta < 0.16)) / length(m.sim$sims.list$theta)
+```
+
+y la probabilidad de que la tasa de remoción por fruto sea mayor que 20%:
+```{r}
+length(which(m.sim$sims.list$theta > 0.2)) / length(m.sim$sims.list$theta)
+```
+
+Con JAGS (o BUGS) podemos ajustar modelos con distinto grado de complejidad. Vamos a ir de a poco... Para empezar, veamos una regresión Binomial. Para corroborar que todo funciona, vamos a simular datos. Veamos por ejemplo un caso en el que las plantas tienen distinto tamaño de cosecha, y que los consumidores se ven atraidos a estas plantas.
+
+
+```{r}
+nplants <- 20
+lambdas <- seq(50,150,length=nplants)
+tam <- rpois(nplants, lambdas)
+b0 <- -5 
+b1 <- 0.05
+p.rem <- plogis(b0+b1*tam)
+removidos <- rbinom(nplants, size=tam, prob=p.rem)
+
+```
+
+Para ajustar el modelo tenemos que modificar el modelo `bugs`
+
+```
+cat(file = "remr.bug", 
+"
+model{
+    b0 ~ dnorm(0, 0.001)
+    b1  ~ dnorm(0, 0.001)
+    for (i in 1:nplants) {    
+      removidos[i] ~ dbin(prem[i], tam[i])
+      logit(prem[i]) <- b0 + b1*tam[i]
+    }    
+  }"
+)
+```
+
+
+```{r, echo=FALSE}
+cat(file = "remr.bug", 
+"
+model{
+    b0 ~ dnorm(0, 0.001)
+    b1  ~ dnorm(0, 0.001)
+    for (i in 1:nplants) {    
+      removidos[i] ~ dbin(prem[i], tam[i])
+      logit(prem[i]) <- b0 + b1*tam[i]
+    }    
+  }"
+)
+```
+
+Como antes, tenemos que armar una lista de datos para pasarle a jags, una función para los valores iniciales y la lista de parámetros que queremos tener en cuenta. 
+
+```{r}
+m.data <- list("nplants", "tam", "removidos") 
+inits <- function() list(b0 = rnorm(1,-5,.1), b1 = rnorm(1,0,.1))
+params <- c("b0", "b1")
+
+ni <- 1000  # número de iteraciones
+nt <- 1     # si descartamos "thin" algunos valores
+nb <- 500   # cuantas iteraciones usamos de "burn in"
+nc <- 3     # y cuantas cadenas corremos
+
+library(jagsUI)
+
+mr.sim <- jags(data = m.data, inits = inits, parameters.to.save = params, 
+             model.file = "remr.bug", n.chains = nc, n.thin = nt, n.iter = ni, n.burnin=nb)
+
+print(mr.sim) 
+```
+
+Como siempre, tenemos que ver que **todas** las cadenas hayan converjido y que tengamos un tamaño de muestra de las posteriores más o menos razonables antes de hacer inferencias. Este ejemplo usa previas no informativas para los parámetros de la regresión, de manera que tenemos los mismos peligros que vimos en el ejemplo de pruebas de potencia. La diferencia es que podríamos usar previas más informativas para evitar errores tipo M y tipo S.
+
+***
+
+```{r}
+sessionInfo()
+```
+
+
+
+-----------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 26 de Septiembre del 2015. Última actualización: `r Sys.Date()`

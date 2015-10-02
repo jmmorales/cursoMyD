@@ -61,11 +61,20 @@ img {
 
 
 
-<div id="modelos-y-datos" class="section level1">
-<h1>Modelos y Datos</h1>
-<div id="juan-manuel-morales" class="section level2">
-<h2>Juan Manuel Morales</h2>
-</div>
+<div id="curso-modelos-y-datos" class="section level1">
+<h1>curso Modelos y Datos</h1>
+<p>Un curso introductorio a métodos de máxima verosimilitud y Bayes usando R y WinBUGS/Jags. Eventualmente incorporaré STAN. Los archivos *.Rmd están configurados para compilarlos con knitr a HTML con estilo bootstrap usando <a href="https://github.com/jimhester/knitrBootstrap">knitrBootstrap</a>. El ecabezado YAML Front-matter es de tipo:</p>
+<pre><code>    knitrBootstrap::bootstrap_document:
+    title: &quot;intro R&quot;
+    theme: cerulean
+    highlight: HighlightJS
+    theme.chooser: FALSE
+    highlight.chooser: FALSE
+    dev: svg</code></pre>
+<p>Los archivos Rmd se pueden compilar de todas maneras con el botón knitr HTML en RStudio, pero para que queden como los estoy subiendo a RPubs hay que ejecutar los siguientes comandos:</p>
+<pre><code> library(knitrBootstrap)
+ library(rmarkdown)
+ render('file.Rmd', 'knitrBootstrap::bootstrap_document')</code></pre>
 </div>
 
 

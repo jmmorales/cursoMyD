@@ -1,7 +1,11 @@
 ---
 output:
-  html_document: 
-    css: ~/css/editor-style.css
+  knitrBootstrap::bootstrap_document:
+    title: "intro"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
 ---
 
 ```{r, echo=FALSE}
@@ -49,7 +53,7 @@ Vamos por partes:
 
 ### (1) *complete pooling*
 
-En este caso, como el modelo de datos (cuántos individuos mueren) es una Binomial, podemos usar una Beta como previa conjuda. Si queremos usar previas no-informativas para la tasa de mortalidad hacemos:
+En este caso, como el modelo de datos (cuántos individuos mueren) es una Binomial, podemos usar una Beta como previa conjugada. Si queremos usar previas no-informativas para la tasa de mortalidad hacemos:
 ```{r}
 alpha <- 1;
 beta <- 1;
@@ -65,8 +69,9 @@ par(op)
 ```
 
 **Preguntas:** 
+
 1- ¿Cuál es el valor esperado de la posterior de la tasa de mortalidad asumiendo "complete pooling"?
-2- ¿Cómo compara esa posterior con la media de la supervivencia?
+2- ¿Qué tan diferente o parecida es esa posterior a la media de la supervivencia?
 
 ### (2) *no-pooling*
 
@@ -87,14 +92,21 @@ par(op)
 ```
 
 **Preguntas:**
+
 3- ¿Qué se puede decir de las distintas posteriores?
+
 4- ¿Cómo estimaríamos una tasa de mortalidad promedio para la meta-población a partir de estas posteriores?
 
 ### (3) *partial pooling*
 
 Finalmente, podemos hacer un análisis jerárquico (partial pooling), reconociendo explícitamente que cada sub-población es potencialmente distinta de las otras, pero sin embargo, todas son parte de la misma meta-población y por ende las observaciones en las sub-poblaciones no son del todo independientes.
 
-Para este análisis vamos a usar JAGS. Primero tenemos que escribir el modelo en lenguaje BUGS y guardarlo en un archivo de texto que llamaremos "hier.bug":
+#### Just Another Gibs Sampler
+Para este análisis vamos a usar [JAGS](http://mcmc-jags.sourceforge.net). JAGS es un software que programa cadenas de Markov chain Monte Carto (MCMC) para modelos bayesianos 
+
+JAGS es un sucesor de BUGS, que es Bayesian inference Using Gibbs Sampling (Lunn, Jackson, Best, Thomas, & Spiegelhalter, 2013; Lunn, Thomas, Best, & Spiegelhalter, 2000). JAGS es muy parecido a [BUGS](http://www.mrc-bsu.cam.ac.uk/software/bugs/) pero tiene algunas funciones extra y a veces es más rápido. Además, `JAGS` se puede usar en Windows, Mac y Linux.
+
+Para usar `JAGS` (o `BUGS`) primero tenemos que definir el modelo usando un lenguaje sintético y guardarlo como un archivo de texto. Podemos escribir el modelo en un editor de texto o, como en el ejemplo de abajo, usar la función `cat` de `R` que nos permite escribir y guardar texto desde un script. En este caso, llamaremos al archivo "hier.bug":
 
 ```
 cat(file="hier.bug",
@@ -129,7 +141,7 @@ cat(file="hier.bug",
     ")
 ```
 
-Luego definimos la lista de datos que vamos a pasarle a JAGS, una función para los valores iniciales de las cadenas Markovianas, y la lista de parámetros que queremos guardar.
+Luego definimos la lista de datos que vamos a pasarle a `JAGS`, una función para los valores iniciales de las cadenas Markovianas, y la lista de parámetros que queremos guardar.
 
 ```{r}
 data <- list("y","m","n")
@@ -138,7 +150,8 @@ params <- c("a","b","theta", "mean_pobl")
 
 ```
 
-Ahora solo queda cargar los paquetes de R que sirven para comunicarse con JAGS, definir las iteraciones, número de cadenas a correr y cuántos valores descartar como burn-in.
+Ahora solo queda cargar los paquetes de `R` que sirven para comunicarse con `JAGS`, definir las iteraciones, número de cadenas a correr y cuántos valores descartar como burn-in.
+
 ```{r, tidy=TRUE}
 library(jagsUI)
 ni <- 5000
