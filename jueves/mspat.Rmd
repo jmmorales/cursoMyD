@@ -1,0 +1,276 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "Mspat"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.width=6, fig.height=5)
+```
+
+#    Captura Recaptura
+
+Datos de monito del monte (*Dromiciops gliroides*) en Llao Llao. Las capturas se realizaron en dos grillas de 25 trampas cada una. Cada individuo capturado fue marcado con un pit-tag y registramos la fecha y ubicación (trampa) de la captura.
+
+Carguemos los datos:
+
+```{r}
+trap.coor <- read.table("https://sites.google.com/site/modelosydatos/trampas.txt", header = T)
+trap.env    <- read.table("https://sites.google.com/site/modelosydatos/microambientetrampa.txt", header = T)
+cap.h <- read.table("https://sites.google.com/site/modelosydatos/cap.txt",header=T)
+cap.trap <- read.table("https://sites.google.com/site/modelosydatos/capturas_spat.txt",header=T)
+```
+
+Los datos de `cap.h` representan las capturas por cada individuo (en filas) para cada fecha (columnas) con 1 si el individuo fue capturado o con un 0 cuando no fue capturado. Por ejemplo, el primer individuo fue capturado solamente el 13 de Eenero del 2010 y el segundo fue capturado el 11 y el 13 de Febrero.
+
+Vamos a estimar el tamaño de la población que estamos muestreando usando "data augmentation" (¡chan!). Para esto recurrimos otra vez a una *variable oculta* que llamaremos `z` representando a individuos que están (`z = 1`) o no (`z = 0`) en la población. De esta forma podemos estimar cuantos individus estaban disponibles de ser capturados pero que no fueron capturados nunca. La versión más simple de este modelo es el M_0 de Royle & Dorazio 2008, pag 185.
+
+```
+cat(file = "M0.bug", 
+    " 
+    model{      
+      # priors
+      psi ~ dunif(0,1)   # pr de que un individuo es parte de la población
+      p   ~ dunif(0,1)   # pr de captura	
+      for(i in 1:(nind+nz)){
+	          z[i]~dbin(psi,1)
+	          mu[i]<-z[i]*p
+	          n[i]~dbin(mu[i],J) # capturas por individuo
+            }
+            N <- sum(z[1:(nind+nz)])
+         }"
+)
+```
+```{r, echo=FALSE}
+cat(file = "M0.bug", 
+    " 
+    model{      
+      # priors
+      psi ~ dunif(0,1)   # pr de que un individuo es parte de la población
+      p   ~ dunif(0,1)   # pr de captura	
+      for(i in 1:(nind+nz)){
+	          z[i]~dbin(psi,1)
+	          mu[i]<-z[i]*p
+	          n[i]~dbin(mu[i],J) # capturas por individuo
+            }
+            N <- sum(z[1:(nind+nz)])
+         }"
+)
+
+```
+
+Antes de ajustar este modelo tenemos que definir algunas cosas:
+
+```{r}
+nind <- dim(cap.h)[1]     # total de individuos capturados
+J    <- dim(cap.h)[2]     # total de días de muestreo
+nz <- 40                  # número de ceros (individuos no capturados nunca)    
+Y <- rbind(as.matrix(cap.h),matrix(0,nrow=nz,ncol=J))   
+n <- rowSums(Y)           # capturas por individuo
+```
+
+Ahora nos falta definir las lista de datos para pasarle a jags, los intits y los parámetros que queremos guardar. También definimos el número de iteraciones, thinning, burnin y cadenas a correr.
+
+```{r}
+m.data <- list("J","nind","nz", "n") 
+inits    <- function() list(psi=runif(1),p=runif(1), z=c(numeric(nind)+1, sample(0:1,nz, replace=TRUE)))
+params   <- c("N", "psi","p")
+ni <- 5000  ;  nt <- 1  ;  nb <- 1000  ;  nc <- 3
+```
+
+Ahora llamamos a jags para que ajuste el modelo
+
+```{r}
+library(jagsUI)
+  
+M0.sim <- jags(data = m.data, inits = inits, parameters.to.save = params, 
+                model.file = "M0.bug", n.chains = nc, n.thin = nt, n.iter = ni, 
+                n.burnin=nb)
+                
+print(M0.sim)
+```
+
+Luego de asegurarnos que las Rhat son menores de 1.1 y que los n.eff son razonables, podemos ver que el tamaño de la población muestreada es de unos 86 individuos. La probabilidad de captura es baja (de un 11%) pero coherente para este tipo de animal. El parámetro $\psi$ no tiene interés aquí (¿por qué?). Lo que es importante comprobar es que hayamos incluido suficientes ceros extra. Para revisar eso vemos que la posterior de `N` no esté truncada a la derecha: 
+
+```{r}
+op = par(mar=c(4,4,1,1)+0.1, las = 1, cex.lab = 1.5, cex.axis = 1.3)
+hist(M0.sim$sims.list$N, 30, xlab="N", main = "")
+```
+
+****
+
+Muy lindo todo, pero qué área estamos muestreando efectivamente? Dicho de otra manera, cuál es la densidad poblacional de esta especie? Podemos usar la ubicación de las capturas y recapturas para estimar los tamaños de áreas de acción y eventualmente la densidad poblacional. El truco es asumir que el área de acción se puede describir como una normal bivariada. Entonces tenemos que estimar la ubicación de los centros de actividad y la varianza de la normal bi-variada. Este es un modelo modificado de Gardner, Royle y Wegan. 2009. Hierarchical models for estimating density from DNA mark-recapture studies. Ecology 90:1106-1115.
+
+```
+cat(file = "Mspat.bug", 
+    " 
+model{
+	for (i in 1:M) { # total de bichos, incluyendo los ceros
+		for (j in 1:R) { # total de trampas 
+			D2[i,j] <- pow(Sx[i]-x[j,1], 2) + pow(Sy[i]-x[j,2], 2)
+			# D2 es la distancia entre el centro de actividad (Sx,Sy) y la trampa j
+			K[i,j] <- exp(-D2[i,j]/sigma2) # gaussian kernel
+			gamma[i,j] <- K[i,j]/E[i] # pr de captura en la trampa j dado que el individuo i es capturado
+			}
+			
+		z[i] ~ dbern(psi)
+		E[i] <- sum(K[i, ]) # grado de exposición del individuo i
+		n[i] ~ dbin(Paug[i], J) # conexión con los datos
+		Paug[i] <- p[i]*z[i]
+		p[i] <- p0 * exp(-1/E[i]) # probabilidad de captura para el individuo i
+		Sx[i] ~ dunif(xlower, xupper) 
+		Sy[i] ~ dunif(ylower, yupper) 
+		}
+	
+	for(h in 1:Ncap) { # total de individuos capturados
+		H[h,1] ~ dcat(gamma[H[h,2], ]) 
+		#H[h,1] indica la trampa donde fue capturado el individuo H[h,2]
+		}
+	psi~ dunif(0, 1)
+	p0 ~ dunif(0, 1)
+	sigma2 ~ dunif(0, 500)
+	N <- sum(z[1:M])
+	D <- N/( (xupper-xlower) * (yupper-ylower) )
+	}				
+"
+)
+```
+
+```{r, echo=FALSE}
+cat(file = "Mspat.bug", 
+    " 
+model{
+	for (i in 1:M) { # total de bichos, incluyendo los ceros
+		for (j in 1:R) { # total de trampas 
+			D2[i,j] <- pow(Sx[i]-x[j,1], 2) + pow(Sy[i]-x[j,2], 2)
+			# D2 es la distancia entre el centro de actividad (Sx,Sy) y la trampa j
+			K[i,j] <- exp(-D2[i,j]/sigma2) # gaussian kernel
+			gamma[i,j] <- K[i,j]/E[i] # pr de captura en la trampa j dado que el individuo i es capturado
+			}
+			
+		z[i] ~ dbern(psi)
+		E[i] <- sum(K[i, ]) # grado de exposición del individuo i
+		n[i] ~ dbin(Paug[i], J) # conexión con los datos
+		Paug[i] <- p[i]*z[i]
+		p[i] <- p0 * exp(-1/E[i]) # probabilidad de captura para el individuo i
+		Sx[i] ~ dunif(xlower, xupper) 
+		Sy[i] ~ dunif(ylower, yupper) 
+		}
+	
+	for(h in 1:Ncap) { # total de individuos capturados
+		H[h,1] ~ dcat(gamma[H[h,2], ]) 
+		#H[h,1] indica la trampa donde fue capturado el individuo H[h,2]
+		}
+	psi~ dunif(0, 1)
+	p0 ~ dunif(0, 1)
+	sigma2 ~ dunif(0, 500)
+	N <- sum(z[1:M])
+	D <- N/( (xupper-xlower) * (yupper-ylower) )
+	}				
+"
+)
+```
+
+Ahora le ponemos valores a algunas variables, incluyendo el número de capturas por trampa
+
+```{r}
+
+nz <- 300                  # número de ceros (individuos no capturados nunca)    
+Y <- rbind(as.matrix(cap.h),matrix(0,nrow=nz,ncol=J))   
+n <- rowSums(Y)           # capturas por individuo
+Nind <- dim(cap.trap)[1] # total de individuos capturados
+J <- dim(cap.trap)[2]    # total de días de campturas
+R <- dim(trap.coor)[1]   # total de trampas
+M <- nz + Nind           
+
+# capturas por trampa
+cbyt <- numeric(R)
+for(i in 1:R){
+  cbyt[i]<-length(which(cap.trap==i))
+}
+```
+
+Generamos una variable `H` donde ponemos el número de trampa en la primera columna y el ID del individuo capturado en la segunda columna. También contamos el número total de capturas `Ncap`.
+
+```{r}
+H <- NULL #c(NA,NA)
+for(i in 1: Nind){
+  tmp<-which(cap.trap[i,] > 0)
+  for(j in 1:length(tmp)){
+    H <- rbind(H, c(cap.trap[i,tmp[j]],i))
+  }
+}
+
+Ncap<-dim(H)[1]    # toal de capturas 
+```
+
+Finalmente definimos los límites para las posibles ubicaciones de los centros de actividad y una matriz de coordenadas para las trampas
+
+```{r}
+xlower <- -2
+xupper <- 2
+ylower <- -2
+yupper <- 2
+
+x <- as.matrix(trap.coor/100)
+```
+
+Ahora lo de siempre; armamos la lista de datos para jags, la función de inits, y la lista de parámetros para guardar. Luego llamamos a jags (esta vez va a tardar un rato en correr).
+
+```{r}
+datos <- list("xlower", "xupper", "ylower", "yupper","x","M","R","J","Ncap","n","H") 
+
+inits <- function() list(sigma2=runif(1,0,50),psi=runif(1),p0=runif(1), z=c(numeric(nind)+1, sample(0:1,nz, replace=TRUE)))
+
+params <- c("sigma2", "N", "psi","p0","D")
+ 
+Mspat.sim <- jags(data = datos, 
+                inits, parameters.to.save = params, 
+                model.file = "Mspat.bug", n.burnin=1000, 
+                n.chains = 3, n.iter = 2000)
+                
+print(Mspat.sim)                
+```
+
+Si bien los Rhat son aceptables, vemos que el n.eff es bastante bajo y habría que hacer más iteraciones. De todas formas vemos que la densidad poblacional es del orden de 18 individuos por ectárea.
+
+```{r}
+op = par(mar=c(4,4,1,1)+0.1, las = 1, cex.lab = 1.5, cex.axis = 1.3)
+hist(Mspat.sim$sims.list$D, 30, xlab="N", main = "")
+```
+En este modelo, sigma2 corresponde al cuadrado del parámtro de escala de una Weibull asumiendo forma=2. Podemo estimar el tamaño de áreas de acción como:
+
+```{r}
+r95 <- qweibull(0.95,shape=2,scale=sqrt(Mspat.sim$mean$sigma2))
+pi * r95^2 # home range in Ha
+```
+
+Si queremos calcular la posterior del área de acción hacemos:
+
+```{r}
+r95s <- qweibull(0.95,shape=2,scale=sqrt(Mspat.sim$sims.list$sigma2))
+aaccs <- pi * r95s^2 # home range in Ha
+
+plot(density(aaccs), main="", xlab="Home range (ha)", ylab="density")
+```
+
+###Pregunta:
+- ¿Pusimos suficientes ceros extra?
+
+
+***
+
+```{r}
+sessionInfo()
+```
+
+-----------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`

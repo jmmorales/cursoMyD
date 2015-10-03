@@ -1,0 +1,323 @@
+---
+title: "elkmv"
+author: "jmm"
+date: "October 1, 2015"
+output: html_document
+---
+# Elk (*Cervus canadensis*) reintroducido en Bancroft, Ontario
+
+Vamos a ver ejemplos de modelos de random walk (RW) ajustados a datso de trayectorias registradas con GPS. El trabajo publicado está [aquí](http://jmorales05.googlepages.com/Morales_et_al_04.pdf). 
+
+Vamos a cargar los datos y reordenarlos un poco. Separamos los "pasos" y "giros" para cada animal. Los pasos son las distancias (en km) entre posiciones consecutivas de los registros de GPS (uno para cada medianoche en este caso). Nos quedamos con una matriz `steps` y otra `turns` donde cada columna corresponde a un animal. Vamos a ajustar una distribución Weibull a los `steps` y una Wrapped Cauchy a los `turns`.
+
+```{r}
+library(coda)
+library(circular)
+library(jagsUI)
+
+elk <- read.table("https://sites.google.com/site/modelosydatos/elkGPS.txt", header = TRUE)
+
+# define "steps" and "turns" 
+nind <- max(elk$id)  # number of tracked animals
+nsteps <- max(table(elk$id))
+steps <- matrix(NA, nsteps, nind)
+turns <- matrix(NA, nsteps, nind)
+
+for(i in 1:nind){
+  steps[1:length(elk$km_day[elk$id==i]), i] <- elk$km_day[elk$id==i]
+  turns[1:length(elk$turns[elk$id==i]), i] <- elk$turns[elk$id==i]
+}
+```
+
+Como los ceros no están definidos en la Weibull, los reemplazamos por valores pequeños.
+
+```{r}
+any(steps==0,na.rm=T) # this is just a check
+steps <- ifelse(steps==0,0.001,steps) 
+```
+
+Escribimos un modelo bugs para el RW simple.
+
+```
+cat(file = "RW.bug", 
+    "
+    model{      
+    # previas
+    m_mu ~ dunif(0,4)   
+    s_mu ~ dunif(0,2)
+    tau_mu <- pow(s_mu,-2)
+    a_rho ~ dunif(1,100)
+    b_rho ~ dunif(1,100)  
+    m_rho <- a_rho/(a_rho+b_rho)
+    a_shape ~ dexp(1)
+    r_shape ~ dgamma(1,1)
+    m_shape <- a_shape/r_shape
+    a_scale ~ dexp(1)
+    r_scale ~ dgamma(1,1)
+    m_scale <- a_scale/r_scale
+    
+    for(i in 1:nind){
+    mu[i] ~ dnorm(m_mu,tau_mu)
+    rho[i] ~ dbeta(a_rho,b_rho)
+    scale[i] ~ dgamma(a_scale, r_scale)
+    shape[i] ~ dgamma(a_shape, r_shape)
+    }
+    
+    Pi <- 3.14159265359 
+    
+    for(j in 1:nind){
+      for (t in 2:nsteps) {	
+        steps[t,j] ~ dweib(shape[j], scale[j])
+    
+       # likelihood for turns
+       ones[t,j] ~ dbern( wc[t,j] )
+       wc[t,j] <- (1/(2*Pi)*(1-pow(rho[j],2))/(1+pow(rho[j],2)-2*rho[j]*cos(turns[t,j]-mu[j])))/ 100
+       turns[t,j] ~ dunif(-4, 4)
+      }
+    }
+    }"
+)
+```
+
+```{r, echo=FALSE}
+cat(file = "RW.bug", 
+    "
+    model{      
+    # previas
+    m_mu ~ dunif(0,4)   
+    s_mu ~ dunif(0,2)
+    tau_mu <- pow(s_mu,-2)
+    a_rho ~ dunif(1,100)
+    b_rho ~ dunif(1,100)  
+    m_rho <- a_rho/(a_rho+b_rho)
+    a_shape ~ dexp(1)
+    r_shape ~ dgamma(1,1)
+    m_shape <- a_shape/r_shape
+    a_scale ~ dexp(1)
+    r_scale ~ dgamma(1,1)
+    m_scale <- a_scale/r_scale
+    
+    for(i in 1:nind){
+    mu[i] ~ dnorm(m_mu,tau_mu)
+    rho[i] ~ dbeta(a_rho,b_rho)
+    scale[i] ~ dgamma(a_scale, r_scale)
+    shape[i] ~ dgamma(a_shape, r_shape)
+    }
+    
+    Pi <- 3.14159265359 
+    
+    for(j in 1:nind){
+      for (t in 2:nsteps) {	
+        steps[t,j] ~ dweib(shape[j], scale[j])
+    
+       # likelihood for turns
+       ones[t,j] ~ dbern( wc[t,j] )
+       wc[t,j] <- (1/(2*Pi)*(1-pow(rho[j],2))/(1+pow(rho[j],2)-2*rho[j]*cos(turns[t,j]-mu[j])))/ 100
+       turns[t,j] ~ dunif(-4, 4)
+      }
+    }
+    }"
+)
+
+```
+
+Antes de ajustar el modelo tenemos que definir algunas variables
+
+```{r}
+n <- length(steps)
+ones <- matrix(1,nsteps,nind)
+rw.data <- list("steps", "turns","nind","nsteps", "ones") 
+inits    <- function() list(mu=rwrappedcauchy(nind,0,0.5),rho=runif(nind,0.3,1))
+params   <- c("m_mu","s_mu","m_rho", "a_scale","m_scale","a_shape","m_shape","scale","shape","mu","rho")
+bugs.dir <- "c:/Program Files/WinBUGS14/" 
+ni <- 2000  ;  nt <- 1  ;  nb <- 1000  ;  nc <- 3
+
+rwJ <- jags(data = rw.data, inits = inits, parameters.to.save = params, 
+            model.file = "RW.bug", n.chains = nc, n.thin = nt, n.iter = ni, 
+            n.burnin=nb)
+
+print(rwJ,2) 
+```
+
+
+library(coda)
+
+s.mu <- as.mcmc(rwJ$sims.list["m_mu"]$m_mu)
+s.rho <- as.mcmc(rwJ$sims.list["m_rho"]$m_rho)
+s.scale <- as.mcmc(rwJ$sims.list["m_scale"]$m_scale)
+s.shape <- as.mcmc(rwJ$sims.list["m_shape"]$m_shape)
+
+op <- par(mfrow=c(2,2)) 
+plot(density(s.mu), xlab="mean turn", main="")
+abline(v=HPDinterval(s.mu),lty=2)
+plot(density(s.rho), xlab="rho", main="")
+abline(v=HPDinterval(s.rho),lty=2)
+plot(density(s.scale), xlab="scale", main="")
+abline(v=HPDinterval(s.scale),lty=2)
+plot(density(s.shape), xlab="shape", main="")
+abline(v=HPDinterval(s.shape),lty=2)
+par(op)  
+
+
+# --- Posterior Predictive Checking------------------------------------------------
+
+n.sims <- ni      
+pps.single <- array(NA,dim=c(n.sims, dim(steps)))
+ppt.single <- array(NA,dim=c(n.sims, dim(steps)))
+for(i in 1:n.sims){
+  for(j in 1:nind){
+    pps.single[i,,j] <- rweibull(nsteps,shape=s.shape[nb+i,j],scale=1/s.scale[nb+i,j]) # note 1/a for scale since WinBUGS and R have different formulations
+    ppt.single[i,,j] <- rwrappedcauchy(nsteps,circular(s.mu[nb+i,j]),s.rho[nb+i,j])   
+  }
+}
+
+# -- Autocorrelation in distance moved
+ppac.s = array(NA,dim=c(n.sims,61,nind))
+for(i in 1:n.sims){
+  for(j in 1:nind){
+    ppac.s[i,,j] <- acf(log(pps.single[i,,j]),na.action=na.pass,lag.max=60,plot=F)$acf
+  }
+}
+  
+obs_ac <- matrix(NA,61,nind)
+for(j in 1:nind){
+  obs_ac[,j] <- acf(log(steps[,j]),na.action=na.pass,lag.max=60,plot=F)$acf[,,1]  # observed ACF
+}
+
+miquantile <- function(x) quantile(x, prob=c(0.025,0.975))
+
+op <- par(mfrow=c(2,2))
+for(j in 1:nind){
+  matplot(1:61,t(ppac.s[,,j]),lty=1,pch=1,col="gray", xlab="lag", ylab="acf")
+  lines(1:61,obs_ac[,j],type="b",lwd=2,col=2, xlab="lag", ylab="autocorrelation")
+  qs = apply(ppac.s[,,j],2,miquantile)
+  lines(1:61,qs[1,])
+  lines(1:61,qs[2,])  
+}
+par(op)
+
+
+##--------------- Now a switching model   --------------------------------------
+
+```{r}
+cat(file = "sw.bug", 
+    " # simple switching RW model
+model{
+      # priors
+      m_mu[1] ~ dunif(-3.14159265359,3.14159265359)
+      m_mu[2] ~ dunif(0,4)
+      #a_scale ~ dexp(1)
+      #r_scale ~ dgamma(1,1)
+      m_scale[1] ~ dnorm(0,0.01)T(0,) 
+      s_scale ~ dunif(0.100)
+      tau_scale <- pow(s_scale,-2)
+      m_eps ~ dnorm(0,0.01)T(0,) 
+      s_eps ~ dunif(0,100)
+      tau_eps <- pow(s_eps,-2) 
+      m_scale[2] <- m_eps + m_scale[1]
+      for(i in 1:2){
+        s_mu[i] ~ dunif(0,2)
+        tau_mu[i] <- pow(s_mu[i],-2) 
+        a_rho[i] ~ dunif(0,500)
+        b_rho[i] ~ dunif(0,500)	
+        #a_shape[i] ~ dexp(1)
+        #r_shape[i] ~ dgamma(1,1)
+        m_shape[i] <- dnorm(0,0.01)
+        a_q[i] ~ dunif(0,800)
+        b_q[i] ~ dunif(0,1000)
+      }
+
+      for(h in 1:nind){ 
+         eps[h] ~ dnorm(m_eps,tau_eps)T(0,)   
+         scale[h,1] ~ dnorm(m_scale[1], tau_scale) 
+         scale[h,2] <- scale[h,1] + eps[h] 
+         mu[h,1] ~ dnorm(m_mu[1], tau_mu[1])
+         mu[h,2] ~ dnorm(m_mu[2], tau_mu[2])
+         idx[1,h] ~ dcat(phi[])
+         shape[h,1] ~ dgamma(a_shape[1], r_shape[1])T(1,)
+         shape[h,2] ~ dgamma(a_shape[2], r_shape[2])
+         for(i in 1:2){
+            rho[h,i]   ~ dbeta(a_rho[i],b_rho[i])          
+            
+            q[h,i] ~ dbeta(a_q[i],b_q[i])
+         }
+      }  
+        Pi <- 3.14159265359 
+        dosPi <- 2*Pi
+      
+            for(j in 1:nind){
+        for (t in 2:nsteps) {
+          p[t,j,1] <- q[j,idx[t-1,j]]
+          p[t,j,2] <- 1-q[j,idx[t-1,j]]	
+          idx[t,j] ~ dcat(p[t,j,])
+          steps[t,j] ~ dweib(shape[j,idx[t,j]], scale[j,idx[t,j]])
+      
+      # likelihood for turns
+      ones[t,j] ~ dbern( wc[t,j] )
+      wc[t,j] <- (1/(2*Pi)*(1-pow(rho[j,idx[t,j]],2))/(1+pow(rho[j,idx[t,j]],2)-2*rho[j,idx[t,j]]*cos(turns[t,j]-mu[j,idx[t,j]])))/ 100
+      turns[t,j] ~ dunif(-3.14159265359,3.14159265359)
+}}
+         }"
+)
+ 
+
+ones <- matrix(1,nsteps,nind)
+phi <- c(0.5,0.5)
+win.data <- list("steps", "turns","nind","nsteps", "ones", "phi") 
+inits    <- function() list(scale=matrix(c(runif(nind,0,1),rep(NA,nind)),nind,2), eps = runif(nind,0,1),
+shape=matrix(runif(2*nind,1,4),nind,2), mu=matrix(runif(2*nind,0,1),nind,2))
+#,rho=matrix(runif(2*nind,0,1),nind,2))
+params   <- c("scale","shape","mu","rho","m_scale","a_scale","m_shape","a_shape","m_mu","s_mu","a_rho","b_rho","q","a_q","b_q", "idx")
+#bugs.dir <- "c:/Program Files/WinBUGS14/" 
+ni <- 1000  ;  nt <- 1  ;  nb <- 500 ;  nc <- 3
+
+rws <- jags(data = win.data, inits = inits, parameters.to.save = params, 
+            model.file = "sw.bug", n.chains = nc, n.thin = nt, n.iter = ni)
+
+print(rws,2) 
+
+
+
+
+
+
+
+# ------------------ Posterior predictive checking
+n.sims <- rws$mcmc.info$n.samples      
+ppsteps <- matrix(NA, c(n.sims, dim(steps)))
+ppturns <- matrix(NA, c(n.sims, dim(steps)))
+
+idx <- rws$sims.list$idx
+a <- rws$sims.list$a
+b <- rws$sims.list$b
+mu <- rws$sims.list$mu
+rho <- rws$sims.list$rho
+
+
+for(i in 1:n.sims){
+  for(j in 1:nind){
+  ppsteps[i,] = rweibull(n,shape=b[i,idx[i,,j]],scale=1/a[i,idx[i,,j]]) # note 1/a for scale since BUGS and R have different formulations
+  ppturns[i,] = rwcauchy(n,mu[i,idx[i,]],rho[i,idx[i,]])
+}
+
+# quick visual comparison of observed step distribution and simulated ones
+op = par(mfrow=c(3,3))
+hist(step,30,freq=F,main=NULL,col="gray") # the data
+for(i in 2:9){
+  j = floor(runif(1,1,n.sims)) # choose a replicate at random
+  hist(ppsteps[j,], 30,freq=F, main=NULL)
+}
+par(op)
+
+# -- Autocorrelation in distance moved
+ppac = matrix(NA,n.sims,61)
+for(i in 1:n.sims){
+  ppac[i,] = acf(log(ppsteps[i,]),lag.max=60,plot=F)$acf
+}
+
+matplot(oac$lag,t(ppac),lty=1,pch=1,col="gray")
+lines(oac$lag,oac$acf,type="b",lwd=2,col=2)
+qsw = apply(ppac,2,miquantile)
+lines(oac$lag,qsw[1,])
+lines(oac$lag,qsw[2,])
+

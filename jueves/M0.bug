@@ -1,0 +1,12 @@
+ 
+    model{      
+      # priors
+      psi ~ dunif(0,1)   # pr de que un individuo es parte de la población
+      p   ~ dunif(0,1)   # pr de captura	
+      for(i in 1:(nind+nz)){
+	          z[i]~dbin(psi,1)
+	          mu[i]<-z[i]*p
+	          n[i]~dbin(mu[i],J) # capturas por individuo
+            }
+            N <- sum(z[1:(nind+nz)])
+         }

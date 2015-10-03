@@ -1,0 +1,28 @@
+ 
+model{
+	for (i in 1:M) {
+		for (j in 1:R) {
+			D2[i,j] <- pow(Sx[i]-x[j,1],2) + pow(Sy[i]-x[j,2],2)
+			#D2 is the distance between an activity center at (Sx,Sy) and trap j
+			K[i,j] <- exp(-D2[i,j]/sigma2) # gaussian kernel
+			gamma[i,j] <- K[i,j]/E[i] # pr de captura en la trampa j dado que el individuo i es capturado
+			}
+		z[i] ~ dbern(psi)
+		E[i] <- sum(K[i, ]) #calculate the exposure, E[i] for an individual i
+		n[i] ~ dbin(Paug[i], J) #n[i] is binomial with parameter Paug
+		Paug[i] <- p[i]*z[i]
+		p[i] <- p0 * exp(-1/E[i]) #calculate the value for p[i] (probabilidad de captura para el individuo i)
+		Sx[i] ~ dunif(xlower, xupper) #sets the prior for the X-coordinate
+		Sy[i] ~ dunif(ylower, yupper) #sets the prior for the Y-coordinate
+		}
+	
+	for(h in 1:Ncap) {
+		H[h,1] ~ dcat(gamma[H[h,2], ]) #H[h,1] indicates the trap
+							#that indivi dual H[h,2] encountered
+		}
+	psi~ dunif(0,1)
+	p0 ~ dunif(0, 1)
+	sigma2 ~ dunif(0, 500)
+	N <- sum(z[1:M])
+	D <- N/( (xupper-xlower) * (yupper-ylower) )
+	}				

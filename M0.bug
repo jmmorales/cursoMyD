@@ -1,0 +1,12 @@
+ 
+    model{      
+      # priors
+      psi ~ dunif(0,1)   # pr that an individual is part of the sampled population
+      p   ~ dunif(0,1)   # capture pr	
+      for(i in 1:(nind+nz)){
+	          z[i]~dbin(psi,1)   # latent variable indicating if the i-th individual is part of the population being sampled
+	          mu[i]<-z[i]*p      # combine pr of being part of the population and pr of capture 
+	          n[i]~dbin(mu[i],J) # number of captures per individual out of J capture days
+            }
+            N <- sum(z[1:(nind+nz)]) # estimated population size
+         }

@@ -1,0 +1,307 @@
+---
+output:
+  knitrBootstrap::bootstrap_document:
+    title: "elk"
+    theme: cosmo
+    highlight: Solarized - Light
+    theme.chooser: TRUE
+    highlight.chooser: TRUE
+---
+
+```{r, echo=FALSE}
+library(knitr)
+options(figure_counter = FALSE)
+opts_knit$set(eval.after='fig.cap')
+knitr::opts_chunk$set(tidy=TRUE, echo=TRUE, warning=FALSE, message=FALSE, dev='svg', fig.width=6, fig.height=5)
+```
+
+## Movimiento de Elk (*Cervus canadensis*) Reintroducido en Bancroft, Ontario
+
+Vamos a ver ejemplos de un par de modelos de random walk (RW) ajustados a datso de trayectorias registradas con GPS. El trabajo completo está [aquí](http://jmorales05.googlepages.com/Morales_et_al_04.pdf). 
+
+Vamos a cargar los datos y reordenarlos un poco. Separamos los "pasos" y "giros" para uno de estos elk. Los pasos son las distancias (en km) entre posiciones consecutivas de los registros de GPS (uno para cada medianoche en este caso). Nos quedamos con un vector de `steps` y otro de `turns`. Vamos a ajustar una distribución Weibull a los `steps` y una Wrapped Cauchy a los `turns`.
+
+```{r}
+library(coda)
+library(circular)
+library(jagsUI)
+
+elk <- read.table("https://sites.google.com/site/modelosydatos/elkGPS1.txt", header = TRUE)
+
+step <- elk$km_day[2:163]
+turn <- elk$turns[2:163]
+n = length(step)  # número de observaciones
+
+```
+
+Como los ceros no están definidos en la Weibull, los reemplazamos por valores pequeños.
+
+```{r}
+any(step==0, na.rm=TRUE) 
+step <- ifelse(step==0,0.01,step) 
+```
+
+Escribimos un modelo bugs para un RW simple donde en cada movimiento elegimos una distancia de desplazamiento de una Weibull y un valor de giro (respecto a la dirección de movimiento del paso anterior) de una distribución circular Wrapped Cauchy. El objetivo es estimar los parámetros de la Weibull y de la Wrapped Cauchy. Commo la Wrapped Cauchy no está definida en jags, tenemos que usar un truco (ones) para estimarla.
+
+```
+cat(file = "single.bug", 
+    "
+model{
+  for (t in 1:n) {
+    # likelihood for steps
+    step[t] ~ dweib(b, a)		# b es el parámetro de forma
+    # likelihood for turns
+    ones[t] ~ dbern( wc[t] )
+    wc[t] <- (1/(2*Pi)*(1-pow(rho,2))/(1+pow(rho,2)-2*rho*cos(turn[t]-mu)))/100
+    turn[t] ~ dunif(-3.14159265359, 3.14159265359)
+  }
+  
+  # priors on movement parameters
+  a ~ dnorm(0,0.001)T(0,)
+  b ~ dnorm(0,0.001)T(0,)
+  
+  rho ~ dunif(0,1)
+  mu ~ dunif(-3.1416,3.1416)
+  Pi <- 3.14159265359
+}"
+)
+```
+
+```{r, echo=FALSE}
+cat(file = "single.bug", 
+    "
+model{
+  for (t in 1:n) {
+    # likelihood for steps
+    step[t] ~ dweib(b, a)		# b is the shape parameter
+    # likelihood for turns
+    ones[t] ~ dbern( wc[t] )
+    wc[t] <- (1/(2*Pi)*(1-pow(rho,2))/(1+pow(rho,2)-2*rho*cos(turn[t]-mu)))/100
+    turn[t] ~ dunif(-3.14159265359, 3.14159265359)
+  }
+  
+  # priors on movement parameters
+  a ~ dnorm(0,0.001)T(0,)
+  b ~ dnorm(0,0.001)T(0,)
+  
+  rho ~ dunif(0,1)
+  mu ~ dunif(-3.1416,3.1416)
+  Pi <- 3.14159265359
+}"
+)
+```
+
+
+Antes de ajustar el modelo tenemos que definir algunas variables
+
+```{r}
+ones <- numeric(n) + 1
+
+data.single <- list("step","turn","n", "ones")
+
+inits.single <- function() list(a=runif(1,0.1,2), b=runif(1,0.4,3), mu=runif(1,0,pi), rho=runif(1))
+
+params.single <- c("a","b","mu","rho")
+
+ni <- 2000  ;  nt <- 1  ;  nb <- 1000  ;  nc <- 3
+
+single.sim <- jags(data.single,inits.single,params.single, model.file="single.bug",
+                      n.chains = nc, n.thin = nt, n.iter = ni)
+
+print(single.sim)
+plot(single.sim) 
+```
+
+### Posterior Predictive Checking
+
+Queremos ver si datos simulados con este modelo tienen características similares a los datos observados.
+
+Vamos a necesitar una función para simular valores de una Wrapped Cauchy:                      
+```{r}   
+rwcauchy <- function(n,mu=0,rho=0){                            
+   u = runif(n)                                                
+   V = cos(2*pi*u)                                             
+   c = 2*rho / (1 + rho^2)                                     
+   t <- (sign(runif(n) - 0.5)*acos((V+c)/(1+c*V))+ mu)%%(2*pi) 
+   return(t)                                                   
+}                                                              
+```   
+
+Ahora definimos cuántas simulaciones vamos a hacer y unas matrices para guardar los steps y turns simulados. Luego hacemos un loop sobre las muestras de la posterior y simulamos datos.
+
+```{r}
+n.sims <- single.sim$mcmc.info$n.samples    # número de simulaciones
+pps.single <- matrix(NA,n.sims,n)           # para posterior predictive steps
+ppt.single <- matrix(NA,n.sims,n)           # para posterios predictive turns
+
+a <- single.sim$sims.list$a
+b <- single.sim$sims.list$b
+mu <- single.sim$sims.list$mu
+rho <- single.sim$sims.list$rho
+
+for(i in 1:n.sims){
+  pps.single[i,] <- rweibull(n, shape=b[i], scale=1/a[i]) # ojo, en R usamos 1/a para la escala porque WinBUGS usa otra formulación
+  ppt.single[i,] <- rwcauchy(n,mu[i],rho[i])
+}
+```
+
+Ahora comparamos visualmente la autocorrelación en la distancia de desplazamiento entre datos observados y datos simulados.
+
+```{r}
+ppac.s = matrix(NA,n.sims,61)
+ for(i in 1:n.sims){
+ ppac.s[i,] = acf(log(pps.single[i,]),lag.max=60,plot=F)$acf
+}
+
+oac = acf(log(step),lag.max=60,plot=F)  #  ACF observada
+
+#matplot(oac$lag,t(ppac.s),lty=1,pch=1,col="gray")
+plot(oac$lag,oac$acf,type="b",lwd=2,col=2, xlab="lag", ylab="autocorrelation")
+miquantile <- function(x) quantile(x, prob=c(0.025,0.975))
+qs = apply(ppac.s,2,miquantile)
+lines(oac$lag,qs[1,])
+lines(oac$lag,qs[2,])
+```
+
+Vemos que el modelo de random walk simple no es capaz de producir un patrón de autocorrelación en distancia de desplazamiento como el observado. Vamos a ver si la cosa mejora ajustando un modelo donde el animal alterna entre dos tipos de random walks.
+
+
+```{r, echo=FALSE}
+cat(file = "sw.bug", 
+    "
+model{
+  for (t in 2:n) {
+    # likelihood for steps
+    step[t] ~ dweib(b[idx[t]], a[idx[t]]) # b is the shape parameter
+    idx[t] ~ dcat(p[t,])
+    # likelihood for turns
+    ones[t] ~ dbern( wc[t] )
+    wc[t] <- (1/(2*Pi)*(1-pow(rho[idx[t]],2))/(1+pow(rho[idx[t]],2)-2*rho[idx[t]]*cos(turn[t]-mu[idx[t]])))/ 100
+    turn[t] ~ dunif(-3.14159265359, 3.14159265359)
+    # the probability of being in movement type 1
+    p[t,1] <- q[idx[t-1]] # <- max(.000000000000,min(.999999999999, q[idx[t-1]]))
+    p[t,2] <- 1-q[idx[t-1]] # <- max(.000000000000,min(.999999999999, q[idx[t-1]]))
+  }
+  
+  # priors on movement parameters
+  a[2] ~ dunif(0, 10)
+  a[1] <- a[2] + eps
+  
+  eps ~ dnorm(0.0, 0.01)T(0.0,)
+  
+  b[1] ~ dunif(0.4,8)
+  b[2] ~ dunif(0.4,8)
+  
+  mu[1] ~ dunif(-1,5)
+  mu[2] ~ dunif(-1,5)
+  rho[1] ~ dunif(0.0,1.0)
+  rho[2] ~ dunif(0.0,1.0)
+  
+  q[1] ~ dunif(0,1)
+  q[2] ~ dunif(0,1)
+  idx[1] ~ dcat(phi[]) 
+  Pi <- 3.14159265359 
+}"
+)
+```
+
+```
+cat(file = "sw.bug", 
+    "
+model{
+  for (t in 2:n) {
+    # likelihood for steps
+    step[t] ~ dweib(b[idx[t]], a[idx[t]]) # b is the shape parameter
+    idx[t] ~ dcat(p[t,])
+    # likelihood for turns
+    ones[t] ~ dbern( wc[t] )
+    wc[t] <- (1/(2*Pi)*(1-pow(rho[idx[t]],2))/(1+pow(rho[idx[t]],2)-2*rho[idx[t]]*cos(turn[t]-mu[idx[t]])))/ 100
+    turn[t] ~ dunif(-3.14159265359, 3.14159265359)
+    # the probability of being in movement type 1
+    p[t,1] <- q[idx[t-1]] # <- max(.000000000000,min(.999999999999, q[idx[t-1]]))
+    p[t,2] <- 1-q[idx[t-1]] # <- max(.000000000000,min(.999999999999, q[idx[t-1]]))
+  }
+  
+  # priors on movement parameters
+  a[2] ~ dunif(0, 10)
+  a[1] <- a[2] + eps
+  
+  eps ~ dnorm(0.0, 0.01)T(0.0,)
+  
+  b[1] ~ dunif(0.4,8)
+  b[2] ~ dunif(0.4,8)
+  
+  mu[1] ~ dunif(-1,5)
+  mu[2] ~ dunif(-1,5)
+  rho[1] ~ dunif(0.0,1.0)
+  rho[2] ~ dunif(0.0,1.0)
+  
+  q[1] ~ dunif(0,1)
+  q[2] ~ dunif(0,1)
+  idx[1] ~ dcat(phi[]) 
+  Pi <- 3.14159265359 
+}"
+)
+```
+Antes de ajustar el modelo necesitamos definir un par de variables
+
+```{r}
+idx <- numeric(n)*NA   # un vector de NAs que va a contener un indicador del RW correspondiente a cada observación
+phi = c(0.5,0.5)      # probabilidades para el estado de la primera observación
+
+ones <- numeric(n) + 1
+data.sw <- list("step", "turn", "n", "phi", "ones")
+inits.sw <- function() list(a=c(NA, runif(1,0.1,2)), b=runif(2,0.4,3), mu=runif(2,0,pi), rho=runif(2,0,1))
+params.sw <- c("a","b","mu","rho","q","idx")
+
+ni <- 5000  ;  nt <- 1  ;  nb <- 2500 ;  nc <- 3
+   
+sw.sim <- jags(data.sw,inits.sw,params.sw, model.file="sw.bug",
+                n.chains = nc, n.thin = nt, n.iter = ni)
+ 
+print(sw.sim)
+```
+
+Hacemos ahora el posterior predictive checking
+
+```{r}
+n.sims <- sw.sim$mcmc.info$n.samples      
+ppsteps <- matrix(NA,n.sims,n)
+ppturns <- matrix(NA,n.sims,n)
+
+idx <- sw.sim$sims.list$idx
+a <- sw.sim$sims.list$a
+b <- sw.sim$sims.list$b
+mu <- sw.sim$sims.list$mu
+rho <- sw.sim$sims.list$rho
+
+for(i in 1:n.sims){
+ppsteps[i,] = rweibull(n,shape=b[i,idx[i,]],scale=1/a[i,idx[i,]]) # note 1/a for scale since WinBUGS and R have different formulations
+ppturns[i,] = rwcauchy(n,mu[i,idx[i,]],rho[i,idx[i,]])
+}
+
+# -- Autocorrelation in distance moved
+oac = acf(log(step),lag.max=60,plot=F)  #  ACF observada
+
+ppac = matrix(NA,n.sims,61)
+for(i in 1:n.sims){
+ppac[i,] = acf(log(ppsteps[i,]),lag.max=60,plot=F)$acf
+}
+
+#matplot(oac$lag,t(ppac),lty=1,pch=1,col="gray")
+plot(oac$lag,oac$acf,type="b",lwd=2,col=2)
+qsw = apply(ppac,2,miquantile)
+lines(oac$lag,qsw[1,])
+lines(oac$lag,qsw[2,])
+``` 
+
+
+***
+
+```{r}
+sessionInfo()
+```
+
+-----------
+
+[Juan Manuel Morales](https://sites.google.com/site/pajarom/). 6 de Septiembre del 2015. Última actualización: `r Sys.Date()`
