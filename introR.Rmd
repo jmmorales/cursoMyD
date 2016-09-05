@@ -18,11 +18,11 @@ knitr::opts_chunk$set(tidy=TRUE, results='markup', echo=TRUE, warning=FALSE, mes
 
 # R de reproducibilidad
 
-Hoy en día, los científicos deben estar capacitados para "sacarle el jugo" a distintas fuentes de información. Parte del trabajo consiste en procesar bases de datos, resumir, graficar, y ajustar modelos a datos. Trabajar con herramientas tipo Excel no solo es limitante (y poco elegante) sino que además atenta contra la "reproducibilidad" de la investigación ya que normalmente no nos queda una documentación detallada de cómo se llega a un resultado o un gráfico en particular (hay mucho movimiento y "click" de mouse de por medio). La reproducibilidad es (o debería ser) un estándar mínimo para el trabajo científico. Si bien, el hecho de que algo sea reproducible no quiere decir que sea correcto, al menos lo hace más fácil de evaluar, de revisar y de re-utilizar. Un paso importante para lograr la reproducibilidad es hacer todo con instrucciones escritas (*scripts*) en lugar de con el mouse.
+Los científicos deberían estar capacitados para "sacarle el jugo" a distintas fuentes de información. Parte de nuestro trabajo consiste en procesar bases de datos, resumir, graficar, y ajustar modelos a datos. Trabajar con herramientas tipo Excel no solo es limitante (y poco elegante) sino que además atenta contra la "reproducibilidad" de la investigación ya que normalmente no nos queda una documentación detallada de cómo se llega a un resultado o un gráfico en particular (hay mucho "click" y movimiento de mouse de por medio). La reproducibilidad es (o debería ser) un estándar mínimo para el trabajo científico. Si bien, el hecho de que algo sea reproducible no quiere decir que sea correcto, al menos lo hace más fácil de evaluar, de revisar y de re-utilizar. Un paso importante para lograr la reproducibilidad es hacer todo con instrucciones escritas (*scripts*) en lugar de con el mouse.
 
 En resumen, para trabajar en ciencia hay que saber un mínimo de programación. Si tenemos que elegir en qué lenguaje programar, `R` o `Python` parecen las mejores opciones a la fecha, pero `R` es actualmente el más popular entre los ecólogos y es el que vamos a usar en este curso. `R` es una implementación de dominio público del lenguaje estadístico `S` que ha ganado popularidad por varios motivos. Se puede descargar de [cran](https://cran.r-project.org/) y funciona en PC, Mac y Linux. Además de usarse para análisis estadísticos, con `R` se puede programar casi cualquier cosa. Tiene programación basada en objetos y programación funcional. La comunidad de usuarios de `R` es cada vez mayor y en general es relativamente fácil encontrar ayuda.
 
-`R` se distribuye con una interfase gráfica rudimentaria, pero hay varios motivos para trabajar con `R` através de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y para la creación de documentos (como éste que fue escrito en RStudio) que incluyen código de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles através de RStudio podremos trabajar mejor y de manera más eficiente. Al principio no parece, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigación sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
+`R` se distribuye con una interfase gráfica rudimentaria, pero hay varios motivos para trabajar con `R` através de [RStudio](http://www.rstudio.org/). Entre otras cosas, RStudio hace posible conectarse con repositorios online como [GitHUb](https://github.com) o [Bitbucket](https://bitbucket.org) para control de versiones y para la creación de documentos (como éste que fue escrito en RStudio) que incluyen código de `R`, figuras, ecuaciones, etc. Aprendiendo a usar `R` y a documentar nuestro trabajo con las herramientas disponibles através de RStudio podremos trabajar mejor y de manera más eficiente. Al principio puede ser que el beneficio no sea evidente, pero es **mucho mejor** trabajar con registros de comandos (scripts) y lograr que nuestra investigación sea reproducible. De lo contrario y parafraseando a [Walter Sobchak (1998)](http://www.imdb.com/character/ch0003521/quotes), seremos "*fuckin' amateurs*"...
 
 ![walter](http://ztoe.net/wp-content/uploads/2008/11/lebowski.jpg)
 
@@ -57,6 +57,8 @@ log10(10)
 2 == 1
 
 2 <= 2 
+
+2 != 1
 ```
 
 Un aspecto básico que tenemos que dominar es que `R` trabaja con vectores, matrices, listas y "data frames".
@@ -75,7 +77,7 @@ Para ver los valores del vector en la ventana de comando escribimos su nombre el
 n
 ```
 
-Un tipo especial de vector son las secuencias. Para generar una secuencia de valores podemos hacer por ejemplo:
+Un tipo especial de vector son las secuencias. Para generar una secuencia de valores enteros podemos hacer por ejemplo:
 ```{r}
 yr <- 2009:2014
 ```
@@ -120,12 +122,12 @@ Algo interesante para ver en un set de datos como éste es el "factor reproducti
 
 ## Bucles (*loops*)
 
-Para no repetir las cuentas año por año podemos hacer un "bucle" (*for loop*) pero antes necesitamos generar un vector donde vamos a guardar los resultados:
+Para no repetir las cuentas año por año podemos hacer un "bucle" (*for loop*) pero antes necesitamos generar un vector donde guardar los resultados:
 
 ```{r}
 tasa <- numeric(length(n) - 1)
 ```
-Aquí combinamos dos funciones de `R`: `numeric` y `length`. Para ver qué hace `numeric` podemos hacer `?numeric`. 
+Aquí combinamos dos funciones de `R`: `numeric` y `length`. Para ver qué hace `numeric` podemos escribir en la venta de comando `?numeric` y dar "enter".
 Poniendo un signo de pregunta y luego el nombre de una función de `R` accedemos a la documentación de esa función (que a veces no es de mucha ayuda...). Una mejor forma de encontrar ayuda e inlcuso información acerca de funciones que no conocemos es visitando [RSeek](http://rseek.org/).
 
 Volviendo a nuestro *loop*, lo que queremos es repetir una operación (o varias) e ir guardando los resultados:
@@ -208,7 +210,7 @@ rd <- lambda - 1
 op <- par(cex.lab=1.5, cex.axis=1.5, mar = c(5,6,4,2) + 0.1)
 plot(N, lambda - rd/K * N, type="l", ylab= expression(lambda(N)), ylim=c(0,3), lwd=2)
 text(K+4, 2.5, "K", cex=1.5)
-abline(h=1, lty=2, lwd=2) # abline agrega una recta al gráfico previo. Ver ?abline
+abline(h=1, lty=2, lwd=2) # abline agrega una recta al gráfico previo.
 abline(v=K, lty=2, lwd=2)
 par(op)
 ```
@@ -219,6 +221,7 @@ Para simular la dinámica de una población con estos parámetros podemos hacer:
 n0 <- 2
 n <- numeric(20)
 n[1] <- n0
+
 for(t in 1:(length(n)-1)){
   n[t+1] <- n[t] + rd*n[t]*(1 - n[t]/K)
 }
@@ -246,11 +249,11 @@ Esta función tiene como argumentos a `n0`, `rd`, `K` y el número de años (`ny
 A menos que le digamos otra cosa, `R` respeta el orden en que definimos los inputs de la función. Entonces, si queremos simular la trayectoria de una población que sigue un modelo logístico con `n0=1`, `rd=1.5`, y `K=100` por `10` generaciones, podemos hacer:
 
 ```{r}
-n <- logistic(1,1.5,100) 
+n <- logistic(1, 1.5, 100) 
 plot(n)
 ```
 
-En este caso, no le dijimos a la función que queríamos `nyr=10` porque está definido por defecto. En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser más explícitos:
+En este caso, no le dijimos a la función que queríamos `nyr=10` porque es valor está definido por defecto. En realidad no es muy buena idea pasarle valores de esta manera a las funciones. Nos conviene ser más explícitos:
 ```{r}
 n <- logistic(n0=1, rd=1.5, K=100, nyr=20)
 ```
